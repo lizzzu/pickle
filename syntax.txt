@@ -1,34 +1,40 @@
 +++
-  # int, float, char, string, bool, void
-  const int[10] vec
-  type name # = 0
-  type name = val
-  nume var
+
+# int, float, char, string, bool, void
+const int[10] vec
+type name # = 0
+type name = val
+nume var
+
 ~~~
-  nume {
-    type name
-    type name
-    type name
-  }
-  type fun(int[] arg1, const float arg2) {
-    return fun()
-  }
+
+nume {
+  type name
+  type name
+  type name
+}
+type fun(int[] arg1, const float arg2) {
+  return fun()
+}
+
 ~~~
-  void main() {
-    if (x == 1) {
-    }
-    elif (x == 2) {
-    }
-    else {
-    }
 
-    for (int i from x to y[ step z]) {
-    }
-
-    while (a == 1 and/or not b <> 2) {
-    }
-
-    true/false
-    a = b
+void main() {
+  if (x == 1) {
   }
+  elif (x == 2) {
+  }
+  else {
+  }
+
+  for (int i from x to y[ step z]) {
+  }
+
+  while (a == 1 and/or not b <> 2) {
+  }
+
+  true/false
+  a = b
+}
+
 ---
