@@ -13,8 +13,15 @@
 \-\-\-								{ return DELIM3; }
 
 (int|float|char|string|bool|void)	{ ECHO; printf("\n"); return TYPE; }
-(for|while|if|elif|else)		 	{ ECHO; printf("\n"); return CTRL; }
-(from|to|step)						{ ECHO; printf("\n"); return RANG; }
+let									{ ECHO; printf("\n"); return LET; }
+for									{ ECHO; printf("\n"); return FOR; }
+while								{ ECHO; printf("\n"); return WHILE; }
+if									{ ECHO; printf("\n"); return IF; }
+elif								{ ECHO; printf("\n"); return ELIF; }
+else								{ ECHO; printf("\n"); return ELSE; }
+from								{ ECHO; printf("\n"); return FROM; }
+to									{ ECHO; printf("\n"); return TO; }
+step								{ ECHO; printf("\n"); return STEP; }
 (break|continue)					{ ECHO; printf("\n"); return BRCN; }
 (and|or|not)						{ ECHO; printf("\n"); return LOGC; }
 (true|false)			 			{ ECHO; printf("\n"); return BOOL; }
@@ -27,7 +34,8 @@ const 								{ ECHO; printf("\n"); return CNST; }
 \"[^\r\n\"]*\"						{ ECHO; printf("\n"); return STR; }
 '[^\r\n'"]'							{ ECHO; printf("\n"); return CHR; }
 
-(==|<>|>|>=|<|<=)					{ ECHO; printf("\n"); return COMP; }
+(==|<>|>|>=|<|<=)					{ ECHO; printf("\n"); return ASGN; }
+(=|\+=|-=|\*=|\/=|%=)				{ ECHO; printf("\n"); return COMP; }
 (\+|-|\*|\/|%)						{ ECHO; printf("\n"); return MATH; }
 
 [ \r\n]								{ }

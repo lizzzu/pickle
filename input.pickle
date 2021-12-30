@@ -7,7 +7,12 @@ char c = 'c'
 
 ~~~
 
-hello
+nume {
+    int x
+    bool y
+}
+
+char fun() {}
 
 ~~~
 

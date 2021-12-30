@@ -6,7 +6,7 @@ FILE *yyin;
 %}
 
 %start program
-%token DELIM1 DELIM2 DELIM3 TYPE CTRL RANG BRCN LOGC BOOL RTRN CNST ID FLT INT STR CHR COMP MATH
+%token DELIM1 DELIM2 DELIM3 TYPE LET FOR WHILE IF ELIF ELSE FROM TO STEP BRCN LOGC BOOL RTRN CNST ID FLT INT STR CHR COMP MATH
 
 %%
 
@@ -15,16 +15,20 @@ program
 	;
 
 block1
-	: declaration block1
-	| declaration
+	: /* epsilon */
+	| declaration block1
 	;
 
 block2
-	: ID
+	: /* epsilon */
+	| ID '{' block1 '}' block2
+	| TYPE ID '(' ')' '{' statements '}' block2
+	| TYPE ID '(' arguments ')' '{' statements '}' block2
 	;
 
 block3
-	: ID
+	: /* epsilon */
+	| ID
 	;
 
 declaration
@@ -45,6 +49,47 @@ rvalue
 	| ID
 	;
 
+arguments
+	: TYPE ID
+	| CNST TYPE ID
+	| TYPE '[' ']' ID
+	| CNST TYPE '[' ']' ID
+	| TYPE ID ',' arguments
+	| CNST TYPE ID ',' arguments
+	| TYPE '[' ']' ID ',' arguments
+	| CNST TYPE '[' ']' ID ',' arguments
+	;
+
+statements
+	: /* epsilon */
+	| RTRN statements
+	| RTRN expression statements
+	| BRCN statements
+	| FOR '(' LET ID FROM INT TO INT ')' '{' statements '}' statements
+	| FOR '(' LET ID FROM INT TO INT STEP INT ')' '{' statements '}' statements
+	| WHILE '(' logical_expression ')' '{' statements '}' statements
+	| if_condition statements
+	| if_condition if_list statements
+	| IF '(' logical_expression ')' '{' statements '}' statements
+	| IF '(' logical_expression ')' '{' statements '}'  statements
+	;
+
+if_list
+	: elif_condition if_list
+	| else_condition
+	;
+
+if_condition : IF '(' logical_expression ')' '{' statements '}' ;
+elif_condition : ELIF '(' logical_expression ')' '{' statements '}' ;
+else_condition : ELSE '{' statements '}' ;
+
+logical_expression
+	:
+	;
+
+expression
+	:
+	;
 
 
 %%
