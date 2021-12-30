@@ -1,6 +1,9 @@
 +++
 
-bla
+int a = b
+const bool[101] v
+string s = "abc"
+char c = 'c'
 
 ~~~
 
