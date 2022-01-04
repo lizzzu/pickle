@@ -8,16 +8,23 @@ FILE *yyin;
 %start program
 %token DELIM1 DELIM2 DELIM3
 %token TYPE VOID CNST
-%token IF ELIF ELSE WHILE FOR LET FROM TO STEP
-%token BRCN RTRN
-%token LOGC BOOL
-%token COMP ASGN EQ MATH
+%token IF ELIF ELSE WHILE FOR LET FROM TO STEP BRCN RTRN
+%token AND OR NOT BOOL
+%token COMP ASGN EQ ADDT PROD
 %token ID FLT INT CHR STR
+
+%left OR
+%left AND
+%nonassoc COMP
+%left ADDT
+%left PROD
+%nonassoc NOT
+%left '.'
 
 %%
 
 program
-    : DELIM1 block1 DELIM2 block2 DELIM2 block3 DELIM3 { printf("correct\n"); }
+    : DELIM1 block1 DELIM2 block2 DELIM2 block3 DELIM3
     ;
 block1
     : /* epsilon */
@@ -96,16 +103,19 @@ literal
     ;
 expression
     : literal
-    | ID '.' ID
+    | expression '.' ID
     | ID '(' ')'
     | ID '(' call_list ')'
+    | '[' expression ']'
     | ID '[' expression ']'
-    | TYPE '[' expression ']'
     | '{' '}'
     | '{' literal_property_list '}'
-    | expression LOGC expression
+    | NOT expression
+    | expression AND expression
+    | expression OR expression
     | expression COMP expression
-    | expression MATH expression
+    | expression ADDT expression
+    | expression PROD expression
     | '(' expression ')'
     ;
 call_list

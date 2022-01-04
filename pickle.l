@@ -24,17 +24,19 @@ let                            { ECHO; printf("\n"); return LET; }
 from                           { ECHO; printf("\n"); return FROM; }
 to                             { ECHO; printf("\n"); return TO; }
 step                           { ECHO; printf("\n"); return STEP; }
-
 (break|continue)               { ECHO; printf("\n"); return BRCN; }
 return                         { ECHO; printf("\n"); return RTRN; }
 
-(and|or|not)                   { ECHO; printf("\n"); return LOGC; }
+and                            { ECHO; printf("\n"); return AND; }
+or                             { ECHO; printf("\n"); return OR; }
+not                            { ECHO; printf("\n"); return NOT; }
 (true|false)                   { ECHO; printf("\n"); return BOOL; }
 
 (==|<>|<|<=|>|>=)              { ECHO; printf("\n"); return COMP; }
 (\+=|-=|\*=|\/=|%=)            { ECHO; printf("\n"); return ASGN; }
 =                              { ECHO; printf("\n"); return EQ; }
-(\+|-|\*|\/|%)                 { ECHO; printf("\n"); return MATH; }
+[+-]                           { ECHO; printf("\n"); return ADDT; }
+[*\/%]                         { ECHO; printf("\n"); return PROD; }
 
 [_a-zA-Z][_a-zA-Z0-9]*         { ECHO; printf("\n"); return ID; }
 [+-]?(0|[1-9][0-9]*)?\.[0-9]+  { ECHO; printf("\n"); return FLT; }
