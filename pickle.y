@@ -43,20 +43,18 @@ block3
     ;
 
 type
-	: TYPE
-	| TYPE '[' ']'
-	| ID
-	| ID '[' ']'
-	;
+    : TYPE
+    | TYPE '[' ']'
+    | ID
+    | ID '[' ']'
+    ;
 property_list
     : type ID ';'
     | type ID ';' property_list
     ;
 argument_list
     : type ID
-    | TYPE ID EQ literal
-	| argument_list ',' type ID
-    | argument_list ',' TYPE ID EQ literal
+	| type ID ',' argument_list
     ;
 
 statement_list
@@ -70,6 +68,7 @@ statement_list
     | statement_list RTRN ';'
     | statement_list RTRN expression ';'
     | statement_list assignation ';'
+    | statement_list function_call ';'
     ;
 elif_list
     : else
@@ -90,22 +89,15 @@ declaration
     | CNST TYPE ID EQ expression
     ;
 assignation
-    : ID EQ expression
-    | ID ASGN expression
+    : expression EQ expression
+    | expression ASGN expression
     ;
 
-literal
-    : FLT
-    | INT
-    | CHR
-    | STR
-    | BOOL
-    ;
 expression
     : literal
+    | ID
     | expression '.' ID
-    | ID '(' ')'
-    | ID '(' call_list ')'
+    | function_call
     | '[' expression ']'
     | ID '[' expression ']'
     | '{' '}'
@@ -117,6 +109,17 @@ expression
     | expression ADDT expression
     | expression PROD expression
     | '(' expression ')'
+    ;
+literal
+    : FLT
+    | INT
+    | CHR
+    | STR
+    | BOOL
+    ;
+function_call
+    : ID '(' ')'
+    | ID '(' call_list ')'
     ;
 call_list
     : expression

@@ -15,8 +15,8 @@
 void                           { ECHO; printf("\n"); return VOID; }
 const                          { ECHO; printf("\n"); return CNST; }
 
-if                             { ECHO; printf("\n"); return IF; }
 elif                           { ECHO; printf("\n"); return ELIF; }
+if                             { ECHO; printf("\n"); return IF; }
 else                           { ECHO; printf("\n"); return ELSE; }
 while                          { ECHO; printf("\n"); return WHILE; }
 for                            { ECHO; printf("\n"); return FOR; }
