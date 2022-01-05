@@ -1,17 +1,32 @@
 %{
 #include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+#include "pickle.h"
 int yylex();
 void yyerror(char*);
 FILE *yyin;
 %}
 
+%union {
+    int intVal;
+    double floatVal;
+    char charVal;
+    char *stringVal;
+    bool boolVal;
+    char *type;
+    char *identifier;
+    char *operator;
+}
+%type <type> type
+
 %start program
 %token DELIM1 DELIM2 DELIM3
-%token TYPE VOID CONST
+%token <type>TYPE <type>VOID CONST
 %token IF ELIF ELSE WHILE FOR LET FROM TO STEP
 %token BREAK CONTINUE RETURN
-%token AND OR NOT EQNE LTGT ADDT PROD EQ ASGN
-%token ID INT FLT CHR STR BOOL
+%token <operator>AND <operator>OR <operator>NOT <operator>EQNE <operator>LTGT <operator>ADDT <operator>PROD <operator>EQ <operator>ASGN
+%token <identifier>ID <intVal>INT <floatVal>FLT <charVal>CHR <stringVal>STR <boolVal>BOOL
 
 %left ','
 %left OR
@@ -34,14 +49,14 @@ block1
     ;
 block2
     : /* empty */
-    | block2 ID '{' property_list '}'
+    | block2 ID '{' property_list '}'  { printf("new object type: %s\n", $2); }
     | block2 block3
     ;
 block3
-    : type ID '(' ')' '{' statement_list '}'
-    | VOID ID '(' ')' '{' statement_list '}'
-    | type ID '(' argument_list ')' '{' statement_list '}'
-    | VOID ID '(' argument_list ')' '{' statement_list '}'
+    : type ID '(' ')' '{' statement_list '}'                { printf("new function of type %s: %s\n", $1, $2); }
+    | VOID ID '(' ')' '{' statement_list '}'                { printf("new function of type %s: %s\n", $1, $2); }
+    | type ID '(' argument_list ')' '{' statement_list '}'  { printf("new function of type %s: %s\n", $1, $2); }
+    | VOID ID '(' argument_list ')' '{' statement_list '}'  { printf("new function of type %s: %s\n", $1, $2); }
     ;
 
 statement_list
@@ -72,10 +87,10 @@ for : FOR '(' LET ID FROM rvalue TO rvalue ')' '{' statement_list '}'
     ;
 
 type
-    : TYPE
-    | TYPE '[' ']'
-    | ID
-    | ID '[' ']'
+    : TYPE          { $$ = strdup($1); }
+    | TYPE '[' ']'  { $$ = strdup($1); strcat($$, "[]"); }
+    | ID            { $$ = strdup($1); }
+    | ID '[' ']'    { $$ = strdup($1); strcat($$, "[]"); }
     ;
 property_list
     : type ID ';'

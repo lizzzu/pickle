@@ -1,5 +1,8 @@
 %{
 #include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+#include "pickle.h"
 #include "pickle.tab.h"
 %}
 
@@ -7,44 +10,44 @@
 
 %%
 
-\+\+\+                         { ECHO; printf("\n"); return DELIM1; }
-~~~                            { ECHO; printf("\n"); return DELIM2; }
-\-\-\-                         { ECHO; printf("\n"); return DELIM3; }
+\+\+\+                         { return DELIM1; }
+~~~                            { return DELIM2; }
+\-\-\-                         { return DELIM3; }
 
-(int|float|char|string|bool)   { ECHO; printf("\n"); return TYPE; }
-void                           { ECHO; printf("\n"); return VOID; }
-const                          { ECHO; printf("\n"); return CONST; }
+(int|float|char|string|bool)   { yylval.type = strdup(yytext); return TYPE; }
+void                           { yylval.type = strdup(yytext); return VOID; }
+const                          { return CONST; }
 
-if                             { ECHO; printf("\n"); return IF; }
-elif                           { ECHO; printf("\n"); return ELIF; }
-else                           { ECHO; printf("\n"); return ELSE; }
-while                          { ECHO; printf("\n"); return WHILE; }
-for                            { ECHO; printf("\n"); return FOR; }
-let                            { ECHO; printf("\n"); return LET; }
-from                           { ECHO; printf("\n"); return FROM; }
-to                             { ECHO; printf("\n"); return TO; }
-step                           { ECHO; printf("\n"); return STEP; }
+if                             { return IF; }
+elif                           { return ELIF; }
+else                           { return ELSE; }
+while                          { return WHILE; }
+for                            { return FOR; }
+let                            { return LET; }
+from                           { return FROM; }
+to                             { return TO; }
+step                           { return STEP; }
 
-break                          { ECHO; printf("\n"); return BREAK; }
-continue                       { ECHO; printf("\n"); return CONTINUE; }
-return                         { ECHO; printf("\n"); return RETURN; }
+break                          { return BREAK; }
+continue                       { return CONTINUE; }
+return                         { return RETURN; }
 
-and                            { ECHO; printf("\n"); return AND; }
-or                             { ECHO; printf("\n"); return OR; }
-not                            { ECHO; printf("\n"); return NOT; }
-(==|<>)                        { ECHO; printf("\n"); return EQNE; }
-(<|<=|>|>=)                    { ECHO; printf("\n"); return LTGT; }
-[+-]                           { ECHO; printf("\n"); return ADDT; }
-[*\/%]                         { ECHO; printf("\n"); return PROD; }
-=                              { ECHO; printf("\n"); return EQ; }
-(\+=|-=|\*=|\/=|%=)            { ECHO; printf("\n"); return ASGN; }
+and                            { yylval.operator = strdup(yytext); return AND; }
+or                             { yylval.operator = strdup(yytext); return OR; }
+not                            { yylval.operator = strdup(yytext); return NOT; }
+(==|<>)                        { yylval.operator = strdup(yytext); return EQNE; }
+(<|<=|>|>=)                    { yylval.operator = strdup(yytext); return LTGT; }
+[+-]                           { yylval.operator = strdup(yytext); return ADDT; }
+[*\/%]                         { yylval.operator = strdup(yytext); return PROD; }
+=                              { yylval.operator = strdup(yytext); return EQ; }
+(\+=|-=|\*=|\/=|%=)            { yylval.operator = strdup(yytext); return ASGN; }
 
-(true|false)                   { ECHO; printf("\n"); return BOOL; }
-[_a-zA-Z][_a-zA-Z0-9]*         { ECHO; printf("\n"); return ID; }
-[+-]?(0|[1-9][0-9]*)           { ECHO; printf("\n"); return INT; }
-[+-]?(0|[1-9][0-9]*)?\.[0-9]+  { ECHO; printf("\n"); return FLT; }
-'[^\r\n'\"]'                   { ECHO; printf("\n"); return CHR; }
-\"[^\r\n'\"]*\"                { ECHO; printf("\n"); return STR; }
+(true|false)                   { yylval.boolVal = yytext[0] == 't'; printf("%d\n", yylval.boolVal); return BOOL; }
+[_a-zA-Z][_a-zA-Z0-9]*         { yylval.identifier = strdup(yytext); return ID; }
+[+-]?(0|[1-9][0-9]*)           { yylval.intVal = atoi(yytext); return INT; }
+[+-]?(0|[1-9][0-9]*)?\.[0-9]+  { yylval.floatVal = atof(yytext); return FLT; }
+'[^\r\n'\"]'                   { yylval.charVal = yytext[0]; return CHR; }
+\"[^\r\n'\"]*\"                { yylval.stringVal = strdup(yytext); return STR; }
 
 [ \t\r\n]                      { }
 .                              { return yytext[0]; }
