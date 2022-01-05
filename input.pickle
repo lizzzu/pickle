@@ -1,6 +1,9 @@
 +++
 
-myType myObject = { };
+myType myObject = {
+  a: 3.14,
+  b: "lfac"
+};
 int[] myIntArray = [10];
 
 ~~~
