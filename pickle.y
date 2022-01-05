@@ -54,7 +54,7 @@ statement_list
     | statement_list BREAK ';'
     | statement_list CONTINUE ';'
     | statement_list RETURN ';'
-    | statement_list RETURN expression ';'
+    | statement_list RETURN rvalue ';'
     | statement_list assignation ';'
     | statement_list function_call ';'
     ;
@@ -63,12 +63,12 @@ elif_list
     | elif elif_list
     ;
 
-if : IF '(' expression ')' '{' statement_list '}' ;
-elif : ELIF '(' expression ')' '{' statement_list '}' ;
+if : IF '(' rvalue ')' '{' statement_list '}' ;
+elif : ELIF '(' rvalue ')' '{' statement_list '}' ;
 else : ELSE '{' statement_list '}' ;
-while : WHILE '(' expression ')' '{' statement_list '}' ;
-for : FOR '(' LET ID FROM expression TO expression ')' '{' statement_list '}'
-    | FOR '(' LET ID FROM expression TO expression STEP expression ')' '{' statement_list '}'
+while : WHILE '(' rvalue ')' '{' statement_list '}' ;
+for : FOR '(' LET ID FROM rvalue TO rvalue ')' '{' statement_list '}'
+    | FOR '(' LET ID FROM rvalue TO rvalue STEP rvalue ')' '{' statement_list '}'
     ;
 
 type
@@ -87,50 +87,56 @@ argument_list
     ;
 
 declaration
-    : type ID EQ expression
-    | CONST TYPE ID EQ expression
+    : type ID EQ rvalue
+    | CONST TYPE ID EQ rvalue
     ;
 assignation
-    : expression EQ expression
-    | expression ASGN expression
+    : lvalue EQ rvalue
+    | lvalue ASGN rvalue
     ;
 
-expression
+lvalue
     : ID
-    | literal
-    | expression '.' ID
-    | function_call
-    | '[' expression ']'
-    | ID '[' expression ']'
-    | '{' '}'
-    | '{' literal_property_list '}'
-    | NOT expression
-    | expression AND expression
-    | expression OR expression
-    | expression EQNE expression
-    | expression LTGT expression
-    | expression ADDT expression
-    | expression PROD expression
-    | '(' expression ')'
+    | lvalue '.' ID
+    | ID '[' rvalue ']'
+    | lvalue '.' ID '[' rvalue ']'
     ;
+rvalue
+    : lvalue
+    | literal
+    | function_call
+    | NOT rvalue
+    | rvalue AND rvalue
+    | rvalue OR rvalue
+    | rvalue EQNE rvalue
+    | rvalue LTGT rvalue
+    | rvalue ADDT rvalue
+    | rvalue PROD rvalue
+    | '(' rvalue ')'
+    ;
+
 literal
     : INT
     | FLT
     | CHR
     | STR
     | BOOL
+    | '[' rvalue ']'
+    | '{' '}'
+    | '{' property_list_values '}'
     ;
-literal_property_list
-    : ID ':' expression
-    | ID ':' expression ',' literal_property_list
+property_list_values
+    : ID ':' rvalue
+    | ID ':' rvalue ',' property_list_values
     ;
+
 function_call
     : ID '(' ')'
-    | ID '(' call_list ')'
+    | ID '(' argument_list_values ')'
     ;
-call_list
-    : expression
-    | expression ',' call_list
+argument_list_values
+    : rvalue
+    | rvalue ',' argument_list_values
     ;
 
 %%
