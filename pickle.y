@@ -54,7 +54,7 @@ property_list
     ;
 argument_list
     : type ID
-	| type ID ',' argument_list
+    | type ID ',' argument_list
     ;
 
 statement_list
