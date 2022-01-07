@@ -58,9 +58,9 @@
 %type <Assignation*> assignation
 %type <deque<Statement*>*> statement_list
 %type <If*> elif_list
-%type <If*> if
-%type <If*> elif
-%type <If*> else
+%type <pair<RValue*, deque<Statement*>*>> if
+%type <pair<RValue*, deque<Statement*>*>> elif
+%type <deque<Statement*>*> else
 %type <While*> while
 %type <For*> for
 %type <LValue*> lvalue
@@ -110,12 +110,12 @@ property_list
     ;
 
 function
-    : type ID '(' ')' '{' statement_list '}'
-    | type ID '(' argument_list ')' '{' statement_list '}'
+    : type ID '(' ')' '{' statement_list '}'                { $$ = new Function; $$->type = $1; $$->name = $2; $$->statements = *$6; driver.pushFunction($$); }
+    | type ID '(' argument_list ')' '{' statement_list '}'  { $$ =           $4; $$->type = $1; $$->name = $2; $$->statements = *$7; driver.pushFunction($$); }
     ;
 argument_list
-    : type ID
-    | type ID ',' argument_list
+    : type ID                                               { $$ = new Function; $$->argumentTypes.push_front($1); $$->argumentNames.push_front($2); }
+    | type ID ',' argument_list                             { $$ =           $4; $$->argumentTypes.push_front($1); $$->argumentNames.push_front($2); }
     ;
 
 declaration
@@ -132,8 +132,8 @@ statement_list
     | statement_list declaration ';'    { $$ = $1; $$->push_front(new Statement{$2}); }
     | statement_list assignation ';'    { $$ = $1; $$->push_front(new Statement{$2}); }
     | statement_list function_call ';'  { $$ = $1; $$->push_front(new Statement{$2}); }
-    | statement_list if                 { $$ = $1; $$->push_front(new Statement{$2}); }
-    | statement_list if elif_list       { $$ = $1; $$->push_front(new Statement{$2}); /* TODO */ }
+    | statement_list if                 { $$ = $1; If *i = new If; i->conditions.push_front($2.first); i->statements.push_back($2.second); $$->push_front(new Statement{i}); }
+    | statement_list if elif_list       { $$ = $1; If *i =     $3; i->conditions.push_front($2.first); i->statements.push_back($2.second); $$->push_front(new Statement{i}); }
     | statement_list while              { $$ = $1; $$->push_front(new Statement{$2}); }
     | statement_list for                { $$ = $1; $$->push_front(new Statement{$2}); }
     | statement_list BREAK ';'          { $$ = $1; $$->push_front(new Statement{"break"}); }
@@ -142,16 +142,16 @@ statement_list
     | statement_list RETURN rvalue ';'  { $$ = $1; $$->push_front(new Statement{$3}); }
     ;
 elif_list
-    : else
-    | elif elif_list
+    : else            { $$ = new If; $$->statements.push_front($1); }
+    | elif elif_list  { $$ = $2; $$->conditions.push_front($1.first); $$->statements.push_front($1.second); }
     ;
 
-if : IF '(' rvalue ')' '{' statement_list '}' ;
-elif : ELIF '(' rvalue ')' '{' statement_list '}' ;
-else : ELSE '{' statement_list '}' ;
-while : WHILE '(' rvalue ')' '{' statement_list '}' ;
-for : FOR '(' LET ID FROM rvalue TO rvalue ')' '{' statement_list '}'
-    | FOR '(' LET ID FROM rvalue TO rvalue STEP rvalue ')' '{' statement_list '}'
+if : IF '(' rvalue ')' '{' statement_list '}'                                      { $$ = make_pair($3, $6); } ;
+elif : ELIF '(' rvalue ')' '{' statement_list '}'                                  { $$ = make_pair($3, $6); } ;
+else : ELSE '{' statement_list '}'                                                 { $$ = $3; } ;
+while : WHILE '(' rvalue ')' '{' statement_list '}'                                { $$ = new While{$3, *$6}; } ;
+for : FOR '(' LET ID FROM rvalue TO rvalue ')' '{' statement_list '}'              { $$ = new For{$4, $6, $8, new RValue{new Literal{1}}, *$11}; } ;
+    | FOR '(' LET ID FROM rvalue TO rvalue STEP rvalue ')' '{' statement_list '}'  { $$ = new For{$4, $6, $8, $10, *$13}; } ;
     ;
 
 lvalue
@@ -191,21 +191,21 @@ literal
     ;
 
 object_literal
-    : '{' '}'
-    | '{' property_list_values '}'
+    : '{' '}'                                 { $$ = new ObjectLiteral; }
+    | '{' property_list_values '}'            { $$ = $2; }
     ;
 property_list_values
-    : ID ':' rvalue
-    | ID ':' rvalue ',' property_list_values
+    : ID ':' rvalue                           { $$ = new ObjectLiteral; $$->memberNames.push_front($1); $$->memberValues.push_front($3); }
+    | ID ':' rvalue ',' property_list_values  { $$ =                $5; $$->memberNames.push_front($1); $$->memberValues.push_front($3); }
     ;
 
 function_call
-    : ID '(' ')'
-    | ID '(' argument_list_values ')'
+    : ID '(' ')'                              { $$ = new FunctionCall; $$->name = $1; }
+    | ID '(' argument_list_values ')'         { $$ =               $3; $$->name = $1; }
     ;
 argument_list_values
-    : rvalue
-    | rvalue ',' argument_list_values
+    : rvalue                                  { $$ = new FunctionCall; $$->arguments.push_front($1); }
+    | rvalue ',' argument_list_values         { $$ =               $3; $$->arguments.push_front($1); }
     ;
 
 %%

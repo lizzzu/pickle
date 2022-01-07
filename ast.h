@@ -53,7 +53,7 @@ struct Assignation {
 
 struct If {
     deque<RValue*> conditions; // if elif elif ... elif
-    deque<deque<Statement*>> statements; // if elif elif ... elif else
+    deque<deque<Statement*>*> statements; // if elif elif ... elif else
 };
 struct While {
     RValue *condition;
