@@ -50,9 +50,11 @@
 %token <bool> BOOL
 
 %start program
-%type <string> type
 %type <Object*> object
 %type <pair<deque<string>*, deque<string>*>> property_list
+%type <LValue*> lvalue
+%type <RValue*> rvalue;
+%type <string> type
 
 %left ','
 %left OR
@@ -137,10 +139,10 @@ for : FOR '(' LET ID FROM rvalue TO rvalue ')' '{' statement_list '}'
     ;
 
 lvalue
-    : ID
-    | lvalue '.' ID
-    | ID '[' rvalue ']'
-    | lvalue '.' ID '[' rvalue ']'
+    : ID                            { $$ = new LValue; $$->content = "str"; }
+    | lvalue '.' ID                 { $$ = new LValue; $$->content = new MemberAccess; $$->content.object = $1; $$->content.member = $3; }
+    | ID '[' rvalue ']'             { $$ = new LValue; $$->content = new ElementAccess; $$->content.array = $1; $$->content.index = $3; }
+    | lvalue '.' ID '[' rvalue ']'  { $$ = new LValue; $$->content = new ElementAccess; $$->content.array = new LValue; $$->content.array->content = new MemberAccess; $$->content.array->content.object = $1; $$->content.array->content.member = $3; $$->content.index = $5; }
     ;
 rvalue
     : lvalue

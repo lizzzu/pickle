@@ -1,5 +1,6 @@
 .vscode
 .DS_Store
-lex.yy.c
-pickle.tab.cc
-pickle.tab.hh
+scanner.cpp
+parser.cpp
+parser.hpp
+pickle
