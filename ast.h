@@ -19,6 +19,7 @@ struct MemberAccess;
 struct ElementAccess;
 struct ObjectLiteral;
 struct FunctionCall;
+struct UnaryExpression;
 struct BinaryExpression;
 
 struct LValue;
@@ -53,7 +54,7 @@ struct Assignation {
 
 struct If {
     deque<RValue*> conditions; // if elif elif ... elif
-    deque<deque<Statement*>*> statements; // if elif elif ... elif else
+    deque<deque<Statement*>> statements; // if elif elif ... elif else
 };
 struct While {
     RValue *condition;
@@ -83,6 +84,10 @@ struct FunctionCall {
     string name;
     deque<RValue*> arguments;
 };
+struct UnaryExpression {
+    RValue *value;
+    string op;
+};
 struct BinaryExpression {
     RValue *lhs;
     RValue *rhs;
@@ -93,7 +98,7 @@ struct LValue {
     variant<MemberAccess*, ElementAccess*, string> content; // string = identifier
 };
 struct RValue {
-    variant<LValue*, Literal*, FunctionCall*, RValue*, BinaryExpression*> content; // RValue = not rvalue
+    variant<LValue*, Literal*, FunctionCall*, RValue*, UnaryExpression*, BinaryExpression*> content;
 };
 struct Literal {
     variant<int, double, char, string, bool, RValue*, ObjectLiteral*> content; // RValue = [rvalue]

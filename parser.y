@@ -89,123 +89,123 @@ program
     ;
 block1
     :
-    | block1 declaration ';'
+    | block1 declaration ';'    { driver.pushDeclaration($2); }
     ;
 block2
     :
-    | block2 object
-    | block2 function
+    | block2 object             { driver.pushObject($2); }
+    | block2 function           { driver.pushFunction($2); }
     ;
 block3
-    : function
+    : function                  { driver.pushFunction($1); if ($1->type != "void" || $1->name != "main" || !$1->argumentTypes.empty()) Pickle::Parser::error("The third block should contain the main function!"); }
     ;
 
 object
-    : ID '{' '}'                { $$ = new Object; $$->name = $1; driver.pushObject($$); }
-    | ID '{' property_list '}'  { $$ =         $3; $$->name = $1; driver.pushObject($$); }
+    : ID '{' '}'                   { $$ = new Object; $$->name = $1; }
+    | ID '{' property_list '}'     { $$ =         $3; $$->name = $1; }
     ;
 property_list
-    : type ID ';'                { $$ = new Object; $$->memberTypes.push_front($1); $$->memberNames.push_front($2); }
-    | type ID ';' property_list  { $$ =         $4; $$->memberTypes.push_front($1); $$->memberNames.push_front($2); }
+    : type ID ';'                  { $$ = new Object; $$->memberTypes.push_front($1); $$->memberNames.push_front($2); }
+    | type ID ';' property_list    { $$ =         $4; $$->memberTypes.push_front($1); $$->memberNames.push_front($2); }
     ;
 
 function
-    : type ID '(' ')' '{' statement_list '}'                { $$ = new Function; $$->type = $1; $$->name = $2; $$->statements = *$6; driver.pushFunction($$); }
-    | type ID '(' argument_list ')' '{' statement_list '}'  { $$ =           $4; $$->type = $1; $$->name = $2; $$->statements = *$7; driver.pushFunction($$); }
+    : type ID '(' ')' '{' statement_list '}'                  { $$ = new Function; $$->type = $1; $$->name = $2; $$->statements = *$6; }
+    | type ID '(' argument_list ')' '{' statement_list '}'    { $$ =           $4; $$->type = $1; $$->name = $2; $$->statements = *$7; }
     ;
 argument_list
-    : type ID                                               { $$ = new Function; $$->argumentTypes.push_front($1); $$->argumentNames.push_front($2); }
-    | type ID ',' argument_list                             { $$ =           $4; $$->argumentTypes.push_front($1); $$->argumentNames.push_front($2); }
+    : type ID                                                 { $$ = new Function; $$->argumentTypes.push_front($1); $$->argumentNames.push_front($2); }
+    | type ID ',' argument_list                               { $$ =           $4; $$->argumentTypes.push_front($1); $$->argumentNames.push_front($2); }
     ;
 
 declaration
-    : type ID EQ rvalue        { $$ = new Declaration{$1, $2, $4, false}; }
-    | CONST TYPE ID EQ rvalue  { $$ = new Declaration{$2, $3, $5, true}; }
+    : type ID EQ rvalue          { $$ = new Declaration{$1, $2, $4, false}; }
+    | CONST TYPE ID EQ rvalue    { $$ = new Declaration{$2, $3, $5, true}; }
     ;
 assignation
-    : lvalue EQ rvalue    { $$ = new Assignation{$1, $3, $2}; }
-    | lvalue ASGN rvalue  { $$ = new Assignation{$1, $3, $2}; }
+    : lvalue EQ rvalue           { $$ = new Assignation{$1, $3, $2}; }
+    | lvalue ASGN rvalue         { $$ = new Assignation{$1, $3, $2}; }
     ;
 
 statement_list
-    :                                   { $$ = new deque<Statement*>; }
-    | statement_list declaration ';'    { $$ = $1; $$->push_front(new Statement{$2}); }
-    | statement_list assignation ';'    { $$ = $1; $$->push_front(new Statement{$2}); }
-    | statement_list function_call ';'  { $$ = $1; $$->push_front(new Statement{$2}); }
-    | statement_list if                 { $$ = $1; If *i = new If; i->conditions.push_front($2.first); i->statements.push_back($2.second); $$->push_front(new Statement{i}); }
-    | statement_list if elif_list       { $$ = $1; If *i =     $3; i->conditions.push_front($2.first); i->statements.push_back($2.second); $$->push_front(new Statement{i}); }
-    | statement_list while              { $$ = $1; $$->push_front(new Statement{$2}); }
-    | statement_list for                { $$ = $1; $$->push_front(new Statement{$2}); }
-    | statement_list BREAK ';'          { $$ = $1; $$->push_front(new Statement{"break"}); }
-    | statement_list CONTINUE ';'       { $$ = $1; $$->push_front(new Statement{"continue"}); }
-    | statement_list RETURN ';'         { $$ = $1; $$->push_front(new Statement{"return"}); }
-    | statement_list RETURN rvalue ';'  { $$ = $1; $$->push_front(new Statement{$3}); }
+    :                                     { $$ = new deque<Statement*>; }
+    | statement_list declaration ';'      { $$ = $1; $$->push_front(new Statement{$2}); }
+    | statement_list assignation ';'      { $$ = $1; $$->push_front(new Statement{$2}); }
+    | statement_list function_call ';'    { $$ = $1; $$->push_front(new Statement{$2}); }
+    | statement_list if                   { $$ = $1; If *i = new If; i->conditions.push_front($2.first); i->statements.push_front(*($2.second)); $$->push_front(new Statement{i}); }
+    | statement_list if elif_list         { $$ = $1; If *i =     $3; i->conditions.push_front($2.first); i->statements.push_front(*($2.second)); $$->push_front(new Statement{i}); }
+    | statement_list while                { $$ = $1; $$->push_front(new Statement{$2}); }
+    | statement_list for                  { $$ = $1; $$->push_front(new Statement{$2}); }
+    | statement_list BREAK ';'            { $$ = $1; $$->push_front(new Statement{"break"}); }
+    | statement_list CONTINUE ';'         { $$ = $1; $$->push_front(new Statement{"continue"}); }
+    | statement_list RETURN ';'           { $$ = $1; $$->push_front(new Statement{"return"}); }
+    | statement_list RETURN rvalue ';'    { $$ = $1; $$->push_front(new Statement{$3}); }
     ;
 elif_list
-    : else            { $$ = new If; $$->statements.push_front($1); }
-    | elif elif_list  { $$ = $2; $$->conditions.push_front($1.first); $$->statements.push_front($1.second); }
+    : else                                { $$ = new If; $$->statements.push_front(*$1); }
+    | elif elif_list                      { $$ = $2; $$->conditions.push_front($1.first); $$->statements.push_front(*($1.second)); }
     ;
 
-if : IF '(' rvalue ')' '{' statement_list '}'                                      { $$ = make_pair($3, $6); } ;
-elif : ELIF '(' rvalue ')' '{' statement_list '}'                                  { $$ = make_pair($3, $6); } ;
-else : ELSE '{' statement_list '}'                                                 { $$ = $3; } ;
-while : WHILE '(' rvalue ')' '{' statement_list '}'                                { $$ = new While{$3, *$6}; } ;
-for : FOR '(' LET ID FROM rvalue TO rvalue ')' '{' statement_list '}'              { $$ = new For{$4, $6, $8, new RValue{new Literal{1}}, *$11}; } ;
-    | FOR '(' LET ID FROM rvalue TO rvalue STEP rvalue ')' '{' statement_list '}'  { $$ = new For{$4, $6, $8, $10, *$13}; } ;
+if : IF '(' rvalue ')' '{' statement_list '}'                                        { $$ = make_pair($3, $6); } ;
+elif : ELIF '(' rvalue ')' '{' statement_list '}'                                    { $$ = make_pair($3, $6); } ;
+else : ELSE '{' statement_list '}'                                                   { $$ = $3; } ;
+while : WHILE '(' rvalue ')' '{' statement_list '}'                                  { $$ = new While{$3, *$6}; } ;
+for : FOR '(' LET ID FROM rvalue TO rvalue ')' '{' statement_list '}'                { $$ = new For{$4, $6, $8, new RValue{new Literal{1}}, *$11}; } ;
+    | FOR '(' LET ID FROM rvalue TO rvalue STEP rvalue ')' '{' statement_list '}'    { $$ = new For{$4, $6, $8, $10, *$13}; } ;
     ;
 
 lvalue
-    : ID                            { $$ = new LValue{$1}; }
-    | lvalue '.' ID                 { $$ = new LValue{new MemberAccess{$1, $3}}; }
-    | ID '[' rvalue ']'             { $$ = new LValue{new ElementAccess{new LValue{$1}, $3}}; }
-    | lvalue '.' ID '[' rvalue ']'  { $$ = new LValue{new ElementAccess{new LValue{new MemberAccess{$1, $3}}, $5}}; }
+    : ID                              { $$ = new LValue{$1}; }
+    | lvalue '.' ID                   { $$ = new LValue{new MemberAccess{$1, $3}}; }
+    | ID '[' rvalue ']'               { $$ = new LValue{new ElementAccess{new LValue{$1}, $3}}; }
+    | lvalue '.' ID '[' rvalue ']'    { $$ = new LValue{new ElementAccess{new LValue{new MemberAccess{$1, $3}}, $5}}; }
     ;
 rvalue
-    : lvalue                        { $$ = new RValue{$1}; }
-    | literal                       { $$ = new RValue{$1}; }
-    | function_call                 { $$ = new RValue{$1}; }
-    | NOT rvalue                    { $$ = new RValue{$2}; }
-    | rvalue AND rvalue             { $$ = new RValue{new BinaryExpression{$1, $3, $2}}; }
-    | rvalue OR rvalue              { $$ = new RValue{new BinaryExpression{$1, $3, $2}}; }
-    | rvalue EQNE rvalue            { $$ = new RValue{new BinaryExpression{$1, $3, $2}}; }
-    | rvalue LTGT rvalue            { $$ = new RValue{new BinaryExpression{$1, $3, $2}}; }
-    | rvalue ADDT rvalue            { $$ = new RValue{new BinaryExpression{$1, $3, $2}}; }
-    | rvalue PROD rvalue            { $$ = new RValue{new BinaryExpression{$1, $3, $2}}; }
-    | '(' rvalue ')'                { $$ = $2; }
+    : lvalue                          { $$ = new RValue{$1}; }
+    | literal                         { $$ = new RValue{$1}; }
+    | function_call                   { $$ = new RValue{$1}; }
+    | NOT rvalue                      { $$ = new RValue{new UnaryExpression{$2, $1}}; }
+    | rvalue AND rvalue               { $$ = new RValue{new BinaryExpression{$1, $3, $2}}; }
+    | rvalue OR rvalue                { $$ = new RValue{new BinaryExpression{$1, $3, $2}}; }
+    | rvalue EQNE rvalue              { $$ = new RValue{new BinaryExpression{$1, $3, $2}}; }
+    | rvalue LTGT rvalue              { $$ = new RValue{new BinaryExpression{$1, $3, $2}}; }
+    | rvalue ADDT rvalue              { $$ = new RValue{new BinaryExpression{$1, $3, $2}}; }
+    | rvalue PROD rvalue              { $$ = new RValue{new BinaryExpression{$1, $3, $2}}; }
+    | '(' rvalue ')'                  { $$ = $2; }
     ;
 
 type
-    : TYPE          { $$ = $1; }
-    | TYPE '[' ']'  { $$ = $1 + "[]"; }
-    | ID            { $$ = $1; }
-    | ID '[' ']'    { $$ = $1 + "[]"; }
+    : TYPE              { $$ = $1; }
+    | TYPE '[' ']'      { $$ = $1 + "[]"; }
+    | ID                { $$ = $1; }
+    | ID '[' ']'        { $$ = $1 + "[]"; }
     ;
 literal
-    : INT             { $$ = new Literal{$1}; }
-    | FLOAT           { $$ = new Literal{$1}; }
-    | CHAR            { $$ = new Literal{$1}; }
-    | STRING          { $$ = new Literal{$1}; }
-    | BOOL            { $$ = new Literal{$1}; }
-    | '[' rvalue ']'  { $$ = new Literal{$2}; }
-    | object_literal  { $$ = new Literal{$1}; }
+    : INT               { $$ = new Literal{$1}; }
+    | FLOAT             { $$ = new Literal{$1}; }
+    | CHAR              { $$ = new Literal{$1}; }
+    | STRING            { $$ = new Literal{$1}; }
+    | BOOL              { $$ = new Literal{$1}; }
+    | '[' rvalue ']'    { $$ = new Literal{$2}; }
+    | object_literal    { $$ = new Literal{$1}; }
     ;
 
 object_literal
-    : '{' '}'                                 { $$ = new ObjectLiteral; }
-    | '{' property_list_values '}'            { $$ = $2; }
+    : '{' '}'                                   { $$ = new ObjectLiteral; }
+    | '{' property_list_values '}'              { $$ = $2; }
     ;
 property_list_values
-    : ID ':' rvalue                           { $$ = new ObjectLiteral; $$->memberNames.push_front($1); $$->memberValues.push_front($3); }
-    | ID ':' rvalue ',' property_list_values  { $$ =                $5; $$->memberNames.push_front($1); $$->memberValues.push_front($3); }
+    : ID ':' rvalue                             { $$ = new ObjectLiteral; $$->memberNames.push_front($1); $$->memberValues.push_front($3); }
+    | ID ':' rvalue ',' property_list_values    { $$ =                $5; $$->memberNames.push_front($1); $$->memberValues.push_front($3); }
     ;
 
 function_call
-    : ID '(' ')'                              { $$ = new FunctionCall; $$->name = $1; }
-    | ID '(' argument_list_values ')'         { $$ =               $3; $$->name = $1; }
+    : ID '(' ')'                         { $$ = new FunctionCall; $$->name = $1; }
+    | ID '(' argument_list_values ')'    { $$ =               $3; $$->name = $1; }
     ;
 argument_list_values
-    : rvalue                                  { $$ = new FunctionCall; $$->arguments.push_front($1); }
-    | rvalue ',' argument_list_values         { $$ =               $3; $$->arguments.push_front($1); }
+    : rvalue                             { $$ = new FunctionCall; $$->arguments.push_front($1); }
+    | rvalue ',' argument_list_values    { $$ =               $3; $$->arguments.push_front($1); }
     ;
 
 %%

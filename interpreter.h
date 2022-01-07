@@ -10,6 +10,7 @@ namespace Pickle {
         Scanner scanner;
         Parser parser;
 
+        vector<Declaration*> declarations;
         vector<Object*> objects;
         vector<Function*> functions;
 
@@ -21,19 +22,15 @@ namespace Pickle {
         int parse() {
             const int res = parser.parse();
             if (res) return res;
-            for (auto object : objects) {
-                auto [name, memberTypes, memberNames] = *object;
-                cout << "OBJECT: " << name << '\n';
-                for (int i = 0; i < int(memberTypes.size()); i++) {
-                    cout << memberTypes[i] << ' ';
-                    cout << memberNames[i] << '\n';
-                }
-            }
             return 0;
         }
 
         void switchInputStream(istream& is) {
             scanner.switch_streams(&is, nullptr);
+        }
+
+        void pushDeclaration(Declaration* declaration) {
+            declarations.push_back(declaration);
         }
 
         void pushObject(Object* object) {
