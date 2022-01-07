@@ -1,77 +1,103 @@
+#ifndef AST_H
+#define AST_H
+
 #include <variant>
 #include <bits/stdc++.h>
 using namespace std;
 
+struct Object;
+struct Function;
+
+struct Declaration;
+struct Assignation;
+
+struct If;
+struct While;
+struct For;
+
+struct MemberAccess;
+struct ElementAccess;
+struct ObjectLiteral;
+struct FunctionCall;
+struct BinaryExpression;
+
+struct LValue;
+struct RValue;
+struct Literal;
+struct Statement;
+
 struct Object {
     string name;
-    vector<string> memberTypes;
-    vector<string> memberNames;
+    deque<string> *memberTypes;
+    deque<string> *memberNames;
 };
-
 struct Function {
     string type;
     string name;
-    vector<string> argumentTypes;
-    vector<string> argumentNames;
-    vector<Statement> statements;
+    deque<string> *argumentTypes;
+    deque<string> *argumentNames;
+    deque<Statement*> *statements;
 };
 
 struct Declaration {
     string type;
     string name;
-    RValue value;
+    RValue *value;
 };
-
 struct Assignation {
-    LValue variable;
-    RValue value;
+    LValue *variable;
+    RValue *value;
 };
 
 struct If {
-    vector<RValue> conditions; // if elif elif ... elif
-    vector<vector<Statement>> statements; // if elif elif ... elif else
+    deque<RValue*> *conditions; // if elif elif ... elif
+    deque<deque<Statement*>> *statements; // if elif elif ... elif else
 };
-
 struct While {
-    RValue condition;
-    vector<Statement> statements;
+    RValue *condition;
+    deque<Statement*> statements;
 };
-
 struct For {
     string iterator;
-    RValue from;
-    RValue to;
-    RValue step;
-    vector<Statement> statements;
+    RValue *from;
+    RValue *to;
+    RValue *step;
+    deque<Statement*> *statements;
 };
 
 struct MemberAccess {
-    LValue object;
+    LValue *object;
     string member;
 };
-
 struct ElementAccess {
-    LValue array;
-    RValue index;
+    LValue *array;
+    RValue *index;
 };
-
 struct ObjectLiteral {
-    vector<string> memberNames;
-    vector<RValue> memberValues;
+    deque<string> *memberNames;
+    deque<RValue*> *memberValues;
 };
-
 struct FunctionCall {
     string name;
-    vector<RValue> arguments;
+    deque<RValue*> *arguments;
 };
-
 struct BinaryExpression {
     string op;
-    RValue lhs;
-    RValue rhs;
+    RValue *lhs;
+    RValue *rhs;
 };
 
-typedef variant<MemberAccess*, ElementAccess*, string> LValue; // string = identifier
-typedef variant<LValue, Literal, FunctionCall*, RValue, BinaryExpression*> RValue; // RValue = not rvalue
-typedef variant<int, double, char, string, bool, RValue, ObjectLiteral*> Literal; // RValue = [rvalue]
-typedef variant<Declaration*, Assignation*, FunctionCall*, If*, While*, For*, string, RValue> Statement; // string = break or continue, RValue = return rvalue (can be nullptr)
+struct LValue {
+    variant<MemberAccess*, ElementAccess*, string> content; // string = identifier
+};
+struct RValue {
+    variant<LValue*, Literal*, FunctionCall*, RValue*, BinaryExpression*> content; // RValue = not rvalue
+};
+struct Literal {
+    variant<int, double, char, string, bool, RValue*, ObjectLiteral*> content; // RValue = [rvalue]
+};
+struct Statement {
+    variant<Declaration*, Assignation*, FunctionCall*, If*, While*, For*, string, RValue*> content; // string = break or continue, RValue = return rvalue (can be nullptr)
+};
+
+#endif

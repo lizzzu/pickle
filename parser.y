@@ -9,6 +9,7 @@
 %define parse.assert
 
 %code requires {
+    #include "ast.h"
     #include <bits/stdc++.h>
     using namespace std;
     namespace Pickle {
@@ -50,6 +51,8 @@
 
 %start program
 %type <string> type
+%type <Object*> object
+%type <pair<deque<string>*, deque<string>*>> property_list
 
 %left ','
 %left OR
@@ -67,11 +70,11 @@ program
     : DELIM1 block1 DELIM2 block2 DELIM2 block3 DELIM3
     ;
 block1
-    : /* empty */
+    :
     | block1 declaration ';'
     ;
 block2
-    : /* empty */
+    :
     | block2 object
     | block2 function
     ;
@@ -80,12 +83,12 @@ block3
     ;
 
 object
-    : ID '{' '}'                { cout << "new object type: " << $1 << '\n'; }
-    | ID '{' property_list '}'  { cout << "new object type: " << $1 << '\n'; }
+    : ID '{' '}'                { $$ = new Object; $$->name = $1; driver.pushObject($$); }
+    | ID '{' property_list '}'  { $$ = new Object; $$->name = $1; tie($$->memberTypes, $$->memberNames) = $3; driver.pushObject($$); }
     ;
 property_list
-    : type ID ';'
-    | type ID ';' property_list
+    : type ID ';'                { $$ = make_pair(new deque<string>(1, $1), new deque<string>(1, $2)); }
+    | type ID ';' property_list  { $$ = $4; $$.first->push_front($1); $$.second->push_front($2); }
     ;
 
 function
@@ -107,7 +110,7 @@ assignation
     ;
 
 statement_list
-    : /* empty */
+    :
     | statement_list declaration ';'
     | statement_list assignation ';'
     | statement_list function_call ';'
