@@ -1,4 +1,4 @@
-a.out
+.DS_Store
 lex.yy.c
-pickle.tab.c
-pickle.tab.h
+pickle.tab.cc
+pickle.tab.hh
