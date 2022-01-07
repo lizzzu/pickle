@@ -43,10 +43,12 @@ struct Declaration {
     string type;
     string name;
     RValue *value;
+    bool constant;
 };
 struct Assignation {
     LValue *variable;
     RValue *value;
+    string op;
 };
 
 struct If {
@@ -82,9 +84,9 @@ struct FunctionCall {
     deque<RValue*> arguments;
 };
 struct BinaryExpression {
-    string op;
     RValue *lhs;
     RValue *rhs;
+    string op;
 };
 
 struct LValue {
@@ -97,7 +99,7 @@ struct Literal {
     variant<int, double, char, string, bool, RValue*, ObjectLiteral*> content; // RValue = [rvalue]
 };
 struct Statement {
-    variant<Declaration*, Assignation*, FunctionCall*, If*, While*, For*, string, RValue*> content; // string = break or continue, RValue = return rvalue (can be nullptr)
+    variant<Declaration*, Assignation*, FunctionCall*, If*, While*, For*, string, RValue*> content; // string = break or continue or return, RValue = return rvalue
 };
 
 #endif

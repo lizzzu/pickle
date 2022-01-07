@@ -119,27 +119,27 @@ argument_list
     ;
 
 declaration
-    : type ID EQ rvalue
-    | CONST TYPE ID EQ rvalue
+    : type ID EQ rvalue        { $$ = new Declaration{$1, $2, $4, false}; }
+    | CONST TYPE ID EQ rvalue  { $$ = new Declaration{$2, $3, $5, true}; }
     ;
 assignation
-    : lvalue EQ rvalue
-    | lvalue ASGN rvalue
+    : lvalue EQ rvalue    { $$ = new Assignation{$1, $3, $2}; }
+    | lvalue ASGN rvalue  { $$ = new Assignation{$1, $3, $2}; }
     ;
 
 statement_list
-    :
-    | statement_list declaration ';'
-    | statement_list assignation ';'
-    | statement_list function_call ';'
-    | statement_list if
-    | statement_list if elif_list
-    | statement_list while
-    | statement_list for
-    | statement_list BREAK ';'
-    | statement_list CONTINUE ';'
-    | statement_list RETURN ';'
-    | statement_list RETURN rvalue ';'
+    :                                   { $$ = new deque<Statement*>; }
+    | statement_list declaration ';'    { $$ = $1; $$->push_front(new Statement{$2}); }
+    | statement_list assignation ';'    { $$ = $1; $$->push_front(new Statement{$2}); }
+    | statement_list function_call ';'  { $$ = $1; $$->push_front(new Statement{$2}); }
+    | statement_list if                 { $$ = $1; $$->push_front(new Statement{$2}); }
+    | statement_list if elif_list       { $$ = $1; $$->push_front(new Statement{$2}); /* TODO */ }
+    | statement_list while              { $$ = $1; $$->push_front(new Statement{$2}); }
+    | statement_list for                { $$ = $1; $$->push_front(new Statement{$2}); }
+    | statement_list BREAK ';'          { $$ = $1; $$->push_front(new Statement{"break"}); }
+    | statement_list CONTINUE ';'       { $$ = $1; $$->push_front(new Statement{"continue"}); }
+    | statement_list RETURN ';'         { $$ = $1; $$->push_front(new Statement{"return"}); }
+    | statement_list RETURN rvalue ';'  { $$ = $1; $$->push_front(new Statement{$3}); }
     ;
 elif_list
     : else
@@ -161,17 +161,17 @@ lvalue
     | lvalue '.' ID '[' rvalue ']'  { $$ = new LValue{new ElementAccess{new LValue{new MemberAccess{$1, $3}}, $5}}; }
     ;
 rvalue
-    : lvalue
-    | literal
-    | function_call
-    | NOT rvalue
-    | rvalue AND rvalue
-    | rvalue OR rvalue
-    | rvalue EQNE rvalue
-    | rvalue LTGT rvalue
-    | rvalue ADDT rvalue
-    | rvalue PROD rvalue
-    | '(' rvalue ')'
+    : lvalue                        { $$ = new RValue{$1}; }
+    | literal                       { $$ = new RValue{$1}; }
+    | function_call                 { $$ = new RValue{$1}; }
+    | NOT rvalue                    { $$ = new RValue{$2}; }
+    | rvalue AND rvalue             { $$ = new RValue{new BinaryExpression{$1, $3, $2}}; }
+    | rvalue OR rvalue              { $$ = new RValue{new BinaryExpression{$1, $3, $2}}; }
+    | rvalue EQNE rvalue            { $$ = new RValue{new BinaryExpression{$1, $3, $2}}; }
+    | rvalue LTGT rvalue            { $$ = new RValue{new BinaryExpression{$1, $3, $2}}; }
+    | rvalue ADDT rvalue            { $$ = new RValue{new BinaryExpression{$1, $3, $2}}; }
+    | rvalue PROD rvalue            { $$ = new RValue{new BinaryExpression{$1, $3, $2}}; }
+    | '(' rvalue ')'                { $$ = $2; }
     ;
 
 type
@@ -181,13 +181,13 @@ type
     | ID '[' ']'    { $$ = $1 + "[]"; }
     ;
 literal
-    : INT
-    | FLOAT
-    | CHAR
-    | STRING
-    | BOOL
-    | '[' rvalue ']'
-    | object_literal
+    : INT             { $$ = new Literal{$1}; }
+    | FLOAT           { $$ = new Literal{$1}; }
+    | CHAR            { $$ = new Literal{$1}; }
+    | STRING          { $$ = new Literal{$1}; }
+    | BOOL            { $$ = new Literal{$1}; }
+    | '[' rvalue ']'  { $$ = new Literal{$2}; }
+    | object_literal  { $$ = new Literal{$1}; }
     ;
 
 object_literal
