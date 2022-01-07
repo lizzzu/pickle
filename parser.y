@@ -51,10 +51,26 @@
 
 %start program
 %type <Object*> object
-%type <pair<deque<string>*, deque<string>*>> property_list
+%type <Object*> property_list
+%type <Function*> function
+%type <Function*> argument_list
+%type <Declaration*> declaration
+%type <Assignation*> assignation
+%type <deque<Statement*>*> statement_list
+%type <If*> elif_list
+%type <If*> if
+%type <If*> elif
+%type <If*> else
+%type <While*> while
+%type <For*> for
 %type <LValue*> lvalue
-%type <RValue*> rvalue;
+%type <RValue*> rvalue
 %type <string> type
+%type <Literal*> literal
+%type <ObjectLiteral*> object_literal
+%type <ObjectLiteral*> property_list_values
+%type <FunctionCall*> function_call
+%type <FunctionCall*> argument_list_values
 
 %left ','
 %left OR
@@ -86,16 +102,16 @@ block3
 
 object
     : ID '{' '}'                { $$ = new Object; $$->name = $1; driver.pushObject($$); }
-    | ID '{' property_list '}'  { $$ = new Object; $$->name = $1; tie($$->memberTypes, $$->memberNames) = $3; driver.pushObject($$); }
+    | ID '{' property_list '}'  { $$ =         $3; $$->name = $1; driver.pushObject($$); }
     ;
 property_list
-    : type ID ';'                { $$ = make_pair(new deque<string>(1, $1), new deque<string>(1, $2)); }
-    | type ID ';' property_list  { $$ = $4; $$.first->push_front($1); $$.second->push_front($2); }
+    : type ID ';'                { $$ = new Object; $$->memberTypes.push_front($1); $$->memberNames.push_front($2); }
+    | type ID ';' property_list  { $$ =         $4; $$->memberTypes.push_front($1); $$->memberNames.push_front($2); }
     ;
 
 function
-    : type ID '(' ')' '{' statement_list '}'                { cout << "new function of type " << $1 << ": " << $2 << '\n'; }
-    | type ID '(' argument_list ')' '{' statement_list '}'  { cout << "new function of type " << $1 << ": " << $2 << '\n'; }
+    : type ID '(' ')' '{' statement_list '}'
+    | type ID '(' argument_list ')' '{' statement_list '}'
     ;
 argument_list
     : type ID
@@ -139,10 +155,10 @@ for : FOR '(' LET ID FROM rvalue TO rvalue ')' '{' statement_list '}'
     ;
 
 lvalue
-    : ID                            { $$ = new LValue; $$->content = "str"; }
-    | lvalue '.' ID                 { $$ = new LValue; $$->content = new MemberAccess; $$->content.object = $1; $$->content.member = $3; }
-    | ID '[' rvalue ']'             { $$ = new LValue; $$->content = new ElementAccess; $$->content.array = $1; $$->content.index = $3; }
-    | lvalue '.' ID '[' rvalue ']'  { $$ = new LValue; $$->content = new ElementAccess; $$->content.array = new LValue; $$->content.array->content = new MemberAccess; $$->content.array->content.object = $1; $$->content.array->content.member = $3; $$->content.index = $5; }
+    : ID                            { $$ = new LValue{$1}; }
+    | lvalue '.' ID                 { $$ = new LValue{new MemberAccess{$1, $3}}; }
+    | ID '[' rvalue ']'             { $$ = new LValue{new ElementAccess{new LValue{$1}, $3}}; }
+    | lvalue '.' ID '[' rvalue ']'  { $$ = new LValue{new ElementAccess{new LValue{new MemberAccess{$1, $3}}, $5}}; }
     ;
 rvalue
     : lvalue

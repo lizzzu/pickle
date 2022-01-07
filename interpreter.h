@@ -24,9 +24,9 @@ namespace Pickle {
             for (auto object : objects) {
                 auto [name, memberTypes, memberNames] = *object;
                 cout << "OBJECT: " << name << '\n';
-                for (int i = 0; i < int(memberTypes->size()); i++) {
-                    cout << memberTypes->at(i) << ' ';
-                    cout << memberNames->at(i) << '\n';
+                for (int i = 0; i < int(memberTypes.size()); i++) {
+                    cout << memberTypes[i] << ' ';
+                    cout << memberNames[i] << '\n';
                 }
             }
             return 0;

@@ -28,15 +28,15 @@ struct Statement;
 
 struct Object {
     string name;
-    deque<string> *memberTypes;
-    deque<string> *memberNames;
+    deque<string> memberTypes;
+    deque<string> memberNames;
 };
 struct Function {
     string type;
     string name;
-    deque<string> *argumentTypes;
-    deque<string> *argumentNames;
-    deque<Statement*> *statements;
+    deque<string> argumentTypes;
+    deque<string> argumentNames;
+    deque<Statement*> statements;
 };
 
 struct Declaration {
@@ -50,8 +50,8 @@ struct Assignation {
 };
 
 struct If {
-    deque<RValue*> *conditions; // if elif elif ... elif
-    deque<deque<Statement*>> *statements; // if elif elif ... elif else
+    deque<RValue*> conditions; // if elif elif ... elif
+    deque<deque<Statement*>> statements; // if elif elif ... elif else
 };
 struct While {
     RValue *condition;
@@ -62,7 +62,7 @@ struct For {
     RValue *from;
     RValue *to;
     RValue *step;
-    deque<Statement*> *statements;
+    deque<Statement*> statements;
 };
 
 struct MemberAccess {
@@ -74,12 +74,12 @@ struct ElementAccess {
     RValue *index;
 };
 struct ObjectLiteral {
-    deque<string> *memberNames;
-    deque<RValue*> *memberValues;
+    deque<string> memberNames;
+    deque<RValue*> memberValues;
 };
 struct FunctionCall {
     string name;
-    deque<RValue*> *arguments;
+    deque<RValue*> arguments;
 };
 struct BinaryExpression {
     string op;
