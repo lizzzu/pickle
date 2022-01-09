@@ -28,14 +28,12 @@ struct Statement;
 
 struct Object {
     string name;
-    deque<string> memberTypes;
-    deque<string> memberNames;
+    deque<pair<string, string>> members; // type, name
 };
 struct Function {
     string type;
     string name;
-    deque<string> argumentTypes;
-    deque<string> argumentNames;
+    deque<pair<string, string>> arguments; // type, name
     deque<Statement*> statements;
 };
 
@@ -76,8 +74,7 @@ struct ElementAccess {
     RValue *index;
 };
 struct ObjectLiteral {
-    deque<string> memberNames;
-    deque<RValue*> memberValues;
+    deque<pair<string, RValue*>> members; // name, value
 };
 struct FunctionCall {
     string name;

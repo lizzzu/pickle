@@ -10,6 +10,7 @@
 
 %code requires {
     #include "ast.h"
+    #include "utils.h"
     #include <bits/stdc++.h>
     using namespace std;
     namespace Pickle {
@@ -97,7 +98,7 @@ block2
     | block2 function           { driver.pushFunction($2); }
     ;
 block3
-    : function                  { driver.pushFunction($1); if ($1->type != "void" || $1->name != "main" || !$1->argumentTypes.empty()) Pickle::Parser::error("the third block should contain the main function"); }
+    : function                  { driver.pushFunction($1); if ($1->type != "void" || $1->name != "main" || !$1->arguments.empty()) Pickle::Parser::error("the third block should contain the " + green("main") + " function"); }
     ;
 
 object
@@ -105,8 +106,8 @@ object
     | ID '{' property_list '}'     { $$ =         $3; $$->name = $1; }
     ;
 property_list
-    : type ID ';'                  { $$ = new Object; $$->memberTypes.push_front($1); $$->memberNames.push_front($2); }
-    | type ID ';' property_list    { $$ =         $4; $$->memberTypes.push_front($1); $$->memberNames.push_front($2); }
+    : type ID ';'                  { $$ = new Object; $$->members.emplace_front($1, $2); }
+    | type ID ';' property_list    { $$ =         $4; $$->members.emplace_front($1, $2); }
     ;
 
 function
@@ -114,8 +115,8 @@ function
     | type ID '(' argument_list ')' '{' statement_list '}'    { $$ =           $4; $$->type = $1; $$->name = $2; $$->statements = *$7; }
     ;
 argument_list
-    : type ID                                                 { $$ = new Function; $$->argumentTypes.push_front($1); $$->argumentNames.push_front($2); }
-    | type ID ',' argument_list                               { $$ =           $4; $$->argumentTypes.push_front($1); $$->argumentNames.push_front($2); }
+    : type ID                                                 { $$ = new Function; $$->arguments.emplace_front($1, $2); }
+    | type ID ',' argument_list                               { $$ =           $4; $$->arguments.emplace_front($1, $2); }
     ;
 
 declaration
@@ -195,8 +196,8 @@ object_literal
     | '{' property_list_values '}'              { $$ = $2; }
     ;
 property_list_values
-    : ID ':' rvalue                             { $$ = new ObjectLiteral; $$->memberNames.push_front($1); $$->memberValues.push_front($3); }
-    | ID ':' rvalue ',' property_list_values    { $$ =                $5; $$->memberNames.push_front($1); $$->memberValues.push_front($3); }
+    : ID ':' rvalue                             { $$ = new ObjectLiteral; $$->members.emplace_front($1, $3); }
+    | ID ':' rvalue ',' property_list_values    { $$ =                $5; $$->members.emplace_front($1, $3); }
     ;
 
 function_call
@@ -211,5 +212,5 @@ argument_list_values
 %%
 
 void Pickle::Parser::error(const string& message) {
-    cerr << "\x1B[31mYACC:\033[0m " << message << '\n';
+    cerr << red("YACC: ") << message << '\n';
 }

@@ -2,6 +2,7 @@
 #define INTERPRETER_H
 
 #include "ast.h"
+#include "utils.h"
 #include "scanner.h"
 #include "parser.hpp"
 
@@ -14,49 +15,27 @@ namespace Pickle {
         vector<Object*> objects;
         vector<Function*> functions;
 
-        vector<string> checkForCycles(set<string>& nodes, map<string, vector<string>>& graph) {
-            map<string, string> father;
-            vector<string> cycle;
-            function<void(string, string)> dfs = [&](string node, string fath) {
-                father[node] = fath;
-                for (string nghb : graph[node])
-                    if (father[nghb] == "")
-                        dfs(nghb, node);
-                    else if (cycle.empty()) {
-                        while (node != "$") {
-                            cycle.push_back(node);
-                            node = father[node];
-                        }
-                        reverse(cycle.begin(), cycle.end());
-                    }
-            };
-            for (string node : nodes)
-                if (father[node] == "")
-                    dfs(node, "$");
-            return cycle;
-        }
-
-        string idk() {
-            map<string, vector<string>> graph;
+        string checkForObjectErrors() {
             set<string> objectNames;
+            map<string, vector<string>> graph;
             for (auto object : objects) {
-                auto [name, memberTypes, memberNames] = *object;
+                auto [name, members] = *object;
                 if (objectNames.count(name))
-                    return "type " + name + " has already been defined";
+                    return "type " + green(name) + " has already been defined";
                 objectNames.insert(name);
-                set<string> members;
-                for (int i = 0; i < int(memberTypes.size()); i++) {
-                    if (members.count(memberNames[i]))
-                        return "member " + memberNames[i] + " has already been defined inside type " + name;
-                    members.insert(memberNames[i]);
-                    graph[name].push_back(memberTypes[i]);
+                set<string> memberNames;
+                for (auto [mType, mName] : members) {
+                    if (memberNames.count(mName))
+                        return "member " + green(mName) + " has already been defined inside type " + green(name);
+                    memberNames.insert(mName);
+                    graph[name].push_back(mType);
                 }
             }
             auto cycle = checkForCycles(objectNames, graph);
             if (!cycle.empty()) {
                 string error = "types [";
                 for (string node : cycle)
-                    error += node + ", ";
+                    error += green(node) + ", ";
                 error.pop_back();
                 error.pop_back();
                 error += "] form a cycle of dependencies";
@@ -66,9 +45,9 @@ namespace Pickle {
         }
 
         bool checkForErrors() {
-            string error = idk();
+            const string error = checkForObjectErrors();
             if (error == "") return false;
-            cerr << "\x1B[31mERROR:\033[0m " << error << '\n';
+            cerr << red("PICKLE: ") << error << '\n';
             return true;
             // checkForUndefinedObjects();
             // checkForUndefinedMembers();
