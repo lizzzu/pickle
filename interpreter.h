@@ -13,6 +13,7 @@ namespace Pickle {
         vector<Declaration*> declarations;
         vector<Object*> objects;
         vector<Function*> functions;
+        set<string> primitiveTypes;
 
         static string red(string str) { return "\x1B[31m" + str + "\033[0m"; }
         static string green(string str) { return "\x1B[32m" + str + "\033[0m"; }
@@ -99,41 +100,41 @@ namespace Pickle {
                 dfsStatement(statement);
         }
 
-        void dfsMemberAccess(MemberAccess* memberAccess) { 
+        void dfsMemberAccess(MemberAccess* memberAccess) {
             dfsLValue(memberAccess->object);
         }
 
-        void dfsElementAccess(ElementAccess* elementAccess) { 
+        void dfsElementAccess(ElementAccess* elementAccess) {
             dfsLValue(elementAccess->array);
             dfsRValue(elementAccess->index);
         }
 
-        void dfsObjectLiteral(ObjectLiteral* objectLiteral) { 
+        void dfsObjectLiteral(ObjectLiteral* objectLiteral) {
             for (auto member : objectLiteral->members)
                 dfsRValue(member.second);
         }
 
-        void dfsFunctionCall(FunctionCall* functionCall) { 
+        void dfsFunctionCall(FunctionCall* functionCall) {
             for (auto argument : functionCall->arguments)
                 dfsRValue(argument);
         }
 
-        void dfsUnaryExpression(UnaryExpression* unaryExpression) { 
+        void dfsUnaryExpression(UnaryExpression* unaryExpression) {
             dfsRValue(unaryExpression->value);
         }
 
-        void dfsBinaryExpression(BinaryExpression* binaryExpression) { 
+        void dfsBinaryExpression(BinaryExpression* binaryExpression) {
             dfsRValue(binaryExpression->lhs);
             dfsRValue(binaryExpression->rhs);
         }
 
-        void dfsLValue(LValue* lvalue) { 
+        void dfsLValue(LValue* lvalue) {
             auto var = lvalue->content;
             if (var.index() == 0) dfsMemberAccess(get<0>(var));
             if (var.index() == 1) dfsElementAccess(get<1>(var));
         }
 
-        void dfsRValue(RValue* rvalue) { 
+        void dfsRValue(RValue* rvalue) {
             auto var = rvalue->content;
             if (var.index() == 0) dfsLValue(get<0>(var));
             if (var.index() == 1) dfsLiteral(get<1>(var));
@@ -143,7 +144,7 @@ namespace Pickle {
             if (var.index() == 5) dfsBinaryExpression(get<5>(var));
         }
 
-        void dfsLiteral(Literal* literal) { 
+        void dfsLiteral(Literal* literal) {
             auto var = literal->content;
             if (var.index() == 5) dfsRValue(get<5>(var));
             if (var.index() == 6) dfsObjectLiteral(get<6>(var));
@@ -160,7 +161,7 @@ namespace Pickle {
             if (var.index() == 7) dfsRValue(get<7>(var));
         }
 
-//////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
         string dfs1If(If* _if) {
             for (auto& group : _if->statements)
@@ -173,7 +174,7 @@ namespace Pickle {
 
         string dfs1Statement(Statement* statement) {
             auto var = statement->content;
-            if (var.index() == 3) { 
+            if (var.index() == 3) {
                 const string res = dfs1If(get<3>(var));
                 if (res != "") return res;
             }
@@ -181,6 +182,69 @@ namespace Pickle {
                 return get<6>(var) == "return" ? "" : get<6>(var);
             return "";
         }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+        string dfs3Declaration(Declaration* declaration) {
+            string type = declaration->type;
+            if (type.back() == ']') {
+                type.pop_back();
+                type.pop_back();
+            }
+            if (find_if(objects.begin(), objects.end(), [&](Object* object) {
+                return object->name == type;
+            }) == objects.end() && !primitiveTypes.count(type))
+                return type;
+            return "";
+        }
+
+        string dfs3If(If* _if) {
+            for (auto& group : _if->statements)
+                for (auto statement : group) {
+                    const string res = dfs3Statement(statement);
+                    if (res != "") return res;
+                }
+            return "";
+        }
+
+        string dfs3While(While* _while) {
+            for (auto statement : _while->statements) {
+                const string res = dfs3Statement(statement);
+                if (res != "") return res;
+            }
+            return "";
+        }
+
+        string dfs3For(For* _for) {
+            for (auto statement : _for->statements) {
+                const string res =  dfs3Statement(statement);
+                if (res != "") return res;
+            }
+            return "";
+        }
+
+        string dfs3Statement(Statement* statement) {
+            auto var = statement->content;
+            if (var.index() == 0) {
+                const string res = dfs3Declaration(get<0>(var));
+                if (res != "") return res;
+            }
+            if (var.index() == 3) {
+                const string res = dfs3If(get<3>(var));
+                if (res != "") return res;
+            }
+            if (var.index() == 4) {
+                const string res = dfs3While(get<4>(var));
+                if (res != "") return res;
+            }
+            if (var.index() == 5) {
+                const string res = dfs3For(get<5>(var));
+                if (res != "") return res;
+            }
+            return "";
+        }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
         string idk() {
             for (auto function : functions) {
@@ -202,19 +266,34 @@ namespace Pickle {
             return "";
         }
 
+        string checkForUndefinedObjects() {
+            for (auto object : objects)
+                for (auto [type, name] : object->members)
+                    if (find_if(objects.begin(), objects.end(), [&](Object* object) {
+                        return object->name == type;
+                    }) == objects.end() && !primitiveTypes.count(type))
+                        return "type " + green(type) + " is not defined";
+            for (auto function : functions) {
+                auto& [type, name, arguments, statements] = *function;
+                for (auto statement : statements) {
+                    const string res = dfs3Statement(statement);
+                    if (res != "") return "type " + green(res) + " is not defined";
+                }
+            }
+            return "";
+        }
+
         string checkForErrors() {
             const string error1 = checkForObjectErrors(); if (error1 != "") return error1;
             const string error2 = idk(); if (error2 != "") return error2;
             const string error3 = checkForBreakContinueErrors(); if (error3 != "") return error3;
+            const string error4 = checkForUndefinedObjects(); if (error4 != "") return error4;
             return "";
-            // checkForUndefinedObjects();
             // checkForUndefinedMembers();
             // checkForUndefinedFunctions();
             // checkForUndefinedVariables();
-            // checkForAlreadyDefinedObjects();
             // checkForAlreadyDefinedFunctions();
             // checkForAlreadyDefinedVariables();
-            // checkForCyclicDependenciesBetweenObjects();
             // checkForCyclicDependenciesBetweenFunctions();
             // checkForTypeErrors();
         }
@@ -270,6 +349,13 @@ namespace Pickle {
         Interpreter() :
             scanner(*this),
             parser(scanner, *this) {
+                primitiveTypes.insert("int");
+                primitiveTypes.insert("float");
+                primitiveTypes.insert("char");
+                primitiveTypes.insert("string");
+                primitiveTypes.insert("bool");
+                primitiveTypes.insert("void");
+
                 deque<pair<string, string>> dq1;
                 dq1.push_back(make_pair("string", "arg1"));
                 dq1.push_back(make_pair("int", "arg2"));

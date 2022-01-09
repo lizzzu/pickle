@@ -1,10 +1,9 @@
 +++
 
-MyType object = {
-  a: 1.618,
-  b: "lfac"
-};
+MyType[] object = [10];
+
 int[] array = [10];
+int x = array[4];
 int var_int = 123;
 string str = "hello pickle";
 
@@ -21,10 +20,10 @@ bool fun(int[] arg1, float arg2) {
 
   if (x == 2) {
     print("yes");
-    continue;
   }
   elif (x == 5) {
     print("no");
+    objectype y = { a: 618 }; 
   }
   else {
     print("maybe");
@@ -43,6 +42,7 @@ bool fun(int[] arg1, float arg2) {
 ~~~
 
 void main() {
+
   object.a = 1.618;
   object.b = "fii";
   fun([10], object.a);
