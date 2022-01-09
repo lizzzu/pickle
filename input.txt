@@ -1,14 +1,14 @@
 +++
 
-myType myObject = {
-  a: 3.14,
+MyType object = {
+  a: 1.618,
   b: "lfac"
 };
-int[] myIntArray = [10];
+int[] array = [10];
 
 ~~~
 
-myType {
+MyType {
   float a;
   string b;
 }
@@ -40,9 +40,9 @@ bool fun(int[] arg1, float arg2) {
 ~~~
 
 void main() {
-  myObject.a = 1.618;
-  myObject.b = "fii";
-  fun([10], myObject.a);
+  object.a = 1.618;
+  object.b = "fii";
+  fun([10], object.a);
 }
 
 ---

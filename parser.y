@@ -97,7 +97,7 @@ block2
     | block2 function           { driver.pushFunction($2); }
     ;
 block3
-    : function                  { driver.pushFunction($1); if ($1->type != "void" || $1->name != "main" || !$1->argumentTypes.empty()) Pickle::Parser::error("The third block should contain the main function!"); }
+    : function                  { driver.pushFunction($1); if ($1->type != "void" || $1->name != "main" || !$1->argumentTypes.empty()) Pickle::Parser::error("the third block should contain the main function"); }
     ;
 
 object
@@ -211,5 +211,5 @@ argument_list_values
 %%
 
 void Pickle::Parser::error(const string& message) {
-    cerr << "YACC: " << message << '\n';
+    cerr << "\x1B[31mYACC:\033[0m " << message << '\n';
 }
