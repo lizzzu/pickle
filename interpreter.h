@@ -2,7 +2,6 @@
 #define INTERPRETER_H
 
 #include "ast.h"
-#include "utils.h"
 #include "scanner.h"
 #include "parser.hpp"
 
@@ -14,6 +13,31 @@ namespace Pickle {
         vector<Declaration*> declarations;
         vector<Object*> objects;
         vector<Function*> functions;
+
+        static string red(string str) { return "\x1B[31m" + str + "\033[0m"; }
+        static string green(string str) { return "\x1B[32m" + str + "\033[0m"; }
+
+        static vector<string> checkForCycles(set<string>& nodes, map<string, vector<string>>& graph) {
+            map<string, string> father;
+            vector<string> cycle;
+            function<void(string, string)> dfs = [&](string node, string fath) {
+                father[node] = fath;
+                for (string nghb : graph[node])
+                    if (father[nghb] == "")
+                        dfs(nghb, node);
+                    else if (cycle.empty()) {
+                        while (node != "$") {
+                            cycle.push_back(node);
+                            node = father[node];
+                        }
+                        reverse(cycle.begin(), cycle.end());
+                    }
+            };
+            for (string node : nodes)
+                if (father[node] == "")
+                    dfs(node, "$");
+            return cycle;
+        }
 
         string checkForObjectErrors() {
             set<string> objectNames;

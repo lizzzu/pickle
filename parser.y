@@ -10,7 +10,6 @@
 
 %code requires {
     #include "ast.h"
-    #include "utils.h"
     #include <bits/stdc++.h>
     using namespace std;
     namespace Pickle {
@@ -98,7 +97,7 @@ block2
     | block2 function           { driver.pushFunction($2); }
     ;
 block3
-    : function                  { driver.pushFunction($1); if ($1->type != "void" || $1->name != "main" || !$1->arguments.empty()) Pickle::Parser::error("the third block should contain the " + green("main") + " function"); }
+    : function                  { driver.pushFunction($1); if ($1->type != "void" || $1->name != "main" || !$1->arguments.empty()) Pickle::Parser::error("the third block should contain the " + Pickle::Interpreter::green("main") + " function"); }
     ;
 
 object
@@ -212,5 +211,5 @@ argument_list_values
 %%
 
 void Pickle::Parser::error(const string& message) {
-    cerr << red("YACC: ") << message << '\n';
+    cerr << Pickle::Interpreter::red("YACC: ") << message << '\n';
 }
