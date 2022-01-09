@@ -86,11 +86,65 @@ namespace Pickle {
             // checkForBreakContinueErrors();
         }
 
+        void createTables() {
+            ofstream foutId("symbol_table.txt");
+            ofstream foutFn("symbol_table_functions.txt");
+
+            for (auto function : functions) {
+                auto [type, name, arguments, statements] = *function;
+                foutFn << type << ' ' << name << '(';
+                if (!arguments.empty())
+                    foutFn << arguments[0].first << ' ' << arguments[0].second;
+                for (int i = 1; i < int(arguments.size()); i++) {
+                    foutFn << ", " << arguments[i].first << ' ' << arguments[i].second;
+                }
+                foutFn << ")\n";
+            }
+
+            for (auto declaration : declarations) {
+                auto [type, name, value, constant] = *declaration;
+                if (value->content.index() == 1) {
+                    if (constant)
+                        foutId << "const ";
+                    auto val = get<1>(value->content);
+                    if (val->content.index() == 0)
+                        foutId << type << ' ' << name << " = " << get<0>(val->content) << '\n';
+                    else if (val->content.index() == 1)
+                        foutId << type << ' ' << name << " = " << get<1>(val->content) << '\n';
+                    else if (val->content.index() == 2)
+                        foutId << type << ' ' << name << " = " << get<2>(val->content) << '\n';
+                    else if (val->content.index() == 3)
+                        foutId << type << ' ' << name << " = " << get<3>(val->content) << '\n';
+                    else if (val->content.index() == 4)
+                        foutId << type << ' ' << name << " = " << get<4>(val->content) << '\n';
+                }
+            }
+
+            foutId << '\n';
+
+            for (auto object : objects) {
+                auto [name, members] = *object;
+                foutId << name << ": ";
+                if (!members.empty())
+                    foutId << members[0].first << ' ' << members[0].second;
+                for (int i = 1; i < int(members.size()); i++) {
+                    foutId << ", " << members[i].first << ' ' << members[i].second;
+                }
+                foutId << '\n';
+            }
+        }
+
+
     public:
         Interpreter() :
             scanner(*this),
-            parser(scanner, *this) { }
-
+            parser(scanner, *this) { 
+                deque<pair<string, string>> dq;
+                dq.push_back(make_pair("string", "arg1"));
+                dq.push_back(make_pair("int", "arg2"));
+                functions.push_back(new Function{"void", "print", dq, deque<Statement*>()});
+            }
+        
         int parse() {
             const int res = parser.parse();
             if (res) return 1;

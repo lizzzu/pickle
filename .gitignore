@@ -4,3 +4,5 @@ scanner.cpp
 parser.cpp
 parser.hpp
 pickle
+symbol_table.txt
+symbol_table_functions.txt
