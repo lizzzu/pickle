@@ -160,6 +160,28 @@ namespace Pickle {
             if (var.index() == 7) dfsRValue(get<7>(var));
         }
 
+//////////////////////////////////////////////////////////////////////////////////
+
+        string dfs1If(If* _if) {
+            for (auto& group : _if->statements)
+                for (auto statement : group) {
+                    const string res = dfs1Statement(statement);
+                    if (res != "") return res;
+                }
+            return "";
+        }
+
+        string dfs1Statement(Statement* statement) {
+            auto var = statement->content;
+            if (var.index() == 3) { 
+                const string res = dfs1If(get<3>(var));
+                if (res != "") return res;
+            }
+            if (var.index() == 6)
+                return get<6>(var) == "return" ? "" : get<6>(var);
+            return "";
+        }
+
         string idk() {
             for (auto function : functions) {
                 auto& [type, name, arguments, statements] = *function;
@@ -169,9 +191,21 @@ namespace Pickle {
             return "";
         }
 
+        string checkForBreakContinueErrors() {
+            for (auto function : functions) {
+                auto& [type, name, arguments, statements] = *function;
+                for (auto statement : statements) {
+                    const string res = dfs1Statement(statement);
+                    if (res != "") return "in function " + green(name) + " there is a " + green(res) + " statement that is not inside a loop";
+                }
+            }
+            return "";
+        }
+
         string checkForErrors() {
-            const string error1 = checkForObjectErrors(); if (error1 == "") return error1;
-            const string error2 = idk(); if (error2 == "") return error2;
+            const string error1 = checkForObjectErrors(); if (error1 != "") return error1;
+            const string error2 = idk(); if (error2 != "") return error2;
+            const string error3 = checkForBreakContinueErrors(); if (error3 != "") return error3;
             return "";
             // checkForUndefinedObjects();
             // checkForUndefinedMembers();
@@ -183,7 +217,6 @@ namespace Pickle {
             // checkForCyclicDependenciesBetweenObjects();
             // checkForCyclicDependenciesBetweenFunctions();
             // checkForTypeErrors();
-            // checkForBreakContinueErrors();
         }
 
         void createTables() {

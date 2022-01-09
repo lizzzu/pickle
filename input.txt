@@ -10,10 +10,6 @@ string str = "hello pickle";
 
 ~~~
 
-Type1 { Type2 x; }
-Type2 { Type3 x; }
-Type3 { Type1 x; }
-
 MyType {
   float a;
   string b;
@@ -25,6 +21,7 @@ bool fun(int[] arg1, float arg2) {
 
   if (x == 2) {
     print("yes");
+    continue;
   }
   elif (x == 5) {
     print("no");
