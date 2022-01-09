@@ -5,6 +5,8 @@ MyType object = {
   b: "lfac"
 };
 int[] array = [10];
+int var_int = 123;
+string str = "hello pickle";
 
 ~~~
 

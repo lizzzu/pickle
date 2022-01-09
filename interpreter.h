@@ -103,20 +103,16 @@ namespace Pickle {
 
             for (auto declaration : declarations) {
                 auto [type, name, value, constant] = *declaration;
+                if (constant)
+                    foutId << "const ";
+                foutId << type << ' ' << name;
                 if (value->content.index() == 1) {
-                    if (constant)
-                        foutId << "const ";
                     auto val = get<1>(value->content);
-                    if (val->content.index() == 0)
-                        foutId << type << ' ' << name << " = " << get<0>(val->content) << '\n';
-                    else if (val->content.index() == 1)
-                        foutId << type << ' ' << name << " = " << get<1>(val->content) << '\n';
-                    else if (val->content.index() == 2)
-                        foutId << type << ' ' << name << " = " << get<2>(val->content) << '\n';
-                    else if (val->content.index() == 3)
-                        foutId << type << ' ' << name << " = " << get<3>(val->content) << '\n';
-                    else if (val->content.index() == 4)
-                        foutId << type << ' ' << name << " = " << get<4>(val->content) << '\n';
+                    if (val->content.index() == 0) foutId << " = " << get<0>(val->content) << '\n';
+                    if (val->content.index() == 1) foutId << " = " << get<1>(val->content) << '\n';
+                    if (val->content.index() == 2) foutId << " = " << get<2>(val->content) << '\n';
+                    if (val->content.index() == 3) foutId << " = " << get<3>(val->content) << '\n';
+                    if (val->content.index() == 4) foutId << " = " << get<4>(val->content) << '\n';
                 }
             }
 
@@ -124,13 +120,13 @@ namespace Pickle {
 
             for (auto object : objects) {
                 auto [name, members] = *object;
-                foutId << name << ": ";
+                foutId << name << " { ";
                 if (!members.empty())
                     foutId << members[0].first << ' ' << members[0].second;
                 for (int i = 1; i < int(members.size()); i++) {
-                    foutId << ", " << members[i].first << ' ' << members[i].second;
+                    foutId << "; " << members[i].first << ' ' << members[i].second;
                 }
-                foutId << '\n';
+                foutId << " }\n";
             }
         }
 
@@ -139,14 +135,35 @@ namespace Pickle {
         Interpreter() :
             scanner(*this),
             parser(scanner, *this) { 
-                deque<pair<string, string>> dq;
-                dq.push_back(make_pair("string", "arg1"));
-                dq.push_back(make_pair("int", "arg2"));
-                functions.push_back(new Function{"void", "print", dq, deque<Statement*>()});
+                deque<pair<string, string>> dq1;
+                dq1.push_back(make_pair("string", "arg1"));
+                dq1.push_back(make_pair("int", "arg2"));
+                functions.push_back(new Function{"void", "print", dq1, deque<Statement*>()});
+                
+                deque<pair<string, string>> dq2;
+                dq2.push_back(make_pair("string", "arg1"));
+                dq2.push_back(make_pair("float", "arg2"));
+                functions.push_back(new Function{"void", "print", dq2, deque<Statement*>()});
+                
+                deque<pair<string, string>> dq3;
+                dq3.push_back(make_pair("string", "arg1"));
+                dq3.push_back(make_pair("char", "arg2"));
+                functions.push_back(new Function{"void", "print", dq3, deque<Statement*>()});
+                
+                deque<pair<string, string>> dq4;
+                dq4.push_back(make_pair("string", "arg1"));
+                dq4.push_back(make_pair("string", "arg2"));
+                functions.push_back(new Function{"void", "print", dq4, deque<Statement*>()});
+
+                deque<pair<string, string>> dq5;
+                dq5.push_back(make_pair("string", "arg1"));
+                dq5.push_back(make_pair("bool", "arg2"));
+                functions.push_back(new Function{"void", "print", dq5, deque<Statement*>()});
             }
         
         int parse() {
             const int res = parser.parse();
+            createTables();
             if (res) return 1;
             if (checkForErrors()) return 1;
             return 0;
