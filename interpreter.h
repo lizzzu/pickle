@@ -68,11 +68,61 @@ namespace Pickle {
             return "";
         }
 
-        bool checkForErrors() {
-            const string error = checkForObjectErrors();
-            if (error == "") return false;
-            cerr << red("PICKLE: ") << error << '\n';
-            return true;
+        function<void(Statement*)> dfsStatement = [&](Statement* statement) {
+            auto var = statement->content;
+            if (var.index() == 0) dfsDeclaration(get<0>(var));
+            if (var.index() == 1) dfsAssignation(get<1>(var));
+            if (var.index() == 2) dfsFunctionCall(get<2>(var));
+            if (var.index() == 3) dfsIf(get<3>(var));
+            if (var.index() == 4) dfsWhile(get<4>(var));
+            if (var.index() == 5) dfsFor(get<5>(var));
+            if (var.index() == 7) dfsRValue(get<7>(var));
+            // ceva
+        };
+
+        void dfsDeclaration() { };
+
+        void dfsAssignation() { };
+
+        void dfsIf() { };
+
+        void dfsWhile() { };
+
+        void dfsFor() { };
+
+        void dfsMemberAccess() { };
+
+        void dfsElementAccess() { };
+
+        void dfsObjectLiteral() { };
+
+        void dfsFunctionCall() { };
+
+        void dfsUnaryExpression() { };
+
+        void dfsBinaryExpression() { };
+
+        void dfsLValue() { };
+
+        void dfsRValue() { };
+
+        void dfsLiteral() { };
+
+        void dfsStatement() { };
+
+        string idk() {
+            for (auto function : functions) {
+                auto& [type, name, arguments, statements] = *function;
+                for (auto statement : statements)
+                    dfsStatement(statement);
+            }
+            return "";
+        }
+
+        string checkForErrors() {
+            const string error1 = checkForObjectErrors(); if (error1 == "") return error1;
+            const string error2 = idk(); if (error2 == "") return error2;
+            return "";
             // checkForUndefinedObjects();
             // checkForUndefinedMembers();
             // checkForUndefinedFunctions();
@@ -95,61 +145,63 @@ namespace Pickle {
                 foutFn << type << ' ' << name << '(';
                 if (!arguments.empty())
                     foutFn << arguments[0].first << ' ' << arguments[0].second;
-                for (int i = 1; i < int(arguments.size()); i++) {
+                for (int i = 1; i < int(arguments.size()); i++)
                     foutFn << ", " << arguments[i].first << ' ' << arguments[i].second;
-                }
                 foutFn << ")\n";
             }
 
             for (auto declaration : declarations) {
                 auto [type, name, value, constant] = *declaration;
-                if (constant)
-                    foutId << "const ";
+                if (constant) foutId << "const ";
                 foutId << type << ' ' << name;
                 if (value->content.index() == 1) {
                     auto val = get<1>(value->content);
-                    if (val->content.index() == 0) foutId << " = " << get<0>(val->content) << '\n';
-                    if (val->content.index() == 1) foutId << " = " << get<1>(val->content) << '\n';
-                    if (val->content.index() == 2) foutId << " = " << get<2>(val->content) << '\n';
-                    if (val->content.index() == 3) foutId << " = " << get<3>(val->content) << '\n';
-                    if (val->content.index() == 4) foutId << " = " << get<4>(val->content) << '\n';
+                    if (val->content.index() == 0) foutId << " = " << get<0>(val->content);
+                    if (val->content.index() == 1) foutId << " = " << get<1>(val->content);
+                    if (val->content.index() == 2) foutId << " = " << get<2>(val->content);
+                    if (val->content.index() == 3) foutId << " = " << get<3>(val->content);
+                    if (val->content.index() == 4) foutId << " = " << get<4>(val->content);
+                    if (val->content.index() == 5) {
+                        auto rvalue = get<5>(val->content);
+                        if (rvalue->content.index() == 1) {
+                            auto literal = get<1>(rvalue->content);
+                            if (literal->content.index() == 0)
+                                foutId << " = [" << get<0>(literal->content) << ']';
+                        }
+                    }
                 }
+                foutId << '\n';
             }
-
             foutId << '\n';
 
             for (auto object : objects) {
                 auto [name, members] = *object;
                 foutId << name << " { ";
-                if (!members.empty())
-                    foutId << members[0].first << ' ' << members[0].second;
-                for (int i = 1; i < int(members.size()); i++) {
-                    foutId << "; " << members[i].first << ' ' << members[i].second;
-                }
-                foutId << " }\n";
+                for (auto [type, name] : members)
+                    foutId << type << ' ' << name << "; ";
+                foutId << "}\n";
             }
         }
-
 
     public:
         Interpreter() :
             scanner(*this),
-            parser(scanner, *this) { 
+            parser(scanner, *this) {
                 deque<pair<string, string>> dq1;
                 dq1.push_back(make_pair("string", "arg1"));
                 dq1.push_back(make_pair("int", "arg2"));
                 functions.push_back(new Function{"void", "print", dq1, deque<Statement*>()});
-                
+
                 deque<pair<string, string>> dq2;
                 dq2.push_back(make_pair("string", "arg1"));
                 dq2.push_back(make_pair("float", "arg2"));
                 functions.push_back(new Function{"void", "print", dq2, deque<Statement*>()});
-                
+
                 deque<pair<string, string>> dq3;
                 dq3.push_back(make_pair("string", "arg1"));
                 dq3.push_back(make_pair("char", "arg2"));
                 functions.push_back(new Function{"void", "print", dq3, deque<Statement*>()});
-                
+
                 deque<pair<string, string>> dq4;
                 dq4.push_back(make_pair("string", "arg1"));
                 dq4.push_back(make_pair("string", "arg2"));
@@ -160,12 +212,16 @@ namespace Pickle {
                 dq5.push_back(make_pair("bool", "arg2"));
                 functions.push_back(new Function{"void", "print", dq5, deque<Statement*>()});
             }
-        
+
         int parse() {
             const int res = parser.parse();
             createTables();
             if (res) return 1;
-            if (checkForErrors()) return 1;
+            const string error = checkForErrors();
+            if (error != "") {
+                cerr << red("PICKLE: ") << error << '\n';
+                return 1;
+            }
             return 0;
         }
 
