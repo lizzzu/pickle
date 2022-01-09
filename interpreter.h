@@ -68,7 +68,88 @@ namespace Pickle {
             return "";
         }
 
-        function<void(Statement*)> dfsStatement = [&](Statement* statement) {
+        void dfsDeclaration(Declaration* declaration) {
+            dfsRValue(declaration->value);
+        }
+
+        void dfsAssignation(Assignation* assignation) {
+            dfsLValue(assignation->variable);
+            dfsRValue(assignation->value);
+        }
+
+        void dfsIf(If* _if) {
+            for (auto condition : _if->conditions)
+                dfsRValue(condition);
+            for (auto& group : _if->statements)
+                for (auto statement : group)
+                    dfsStatement(statement);
+        }
+
+        void dfsWhile(While* _while) {
+            dfsRValue(_while->condition);
+            for (auto statement : _while->statements)
+                dfsStatement(statement);
+        }
+
+        void dfsFor(For* _for) {
+            dfsRValue(_for->from);
+            dfsRValue(_for->to);
+            dfsRValue(_for->step);
+            for (auto statement : _for->statements)
+                dfsStatement(statement);
+        }
+
+        void dfsMemberAccess(MemberAccess* memberAccess) { 
+            dfsLValue(memberAccess->object);
+        }
+
+        void dfsElementAccess(ElementAccess* elementAccess) { 
+            dfsLValue(elementAccess->array);
+            dfsRValue(elementAccess->index);
+        }
+
+        void dfsObjectLiteral(ObjectLiteral* objectLiteral) { 
+            for (auto member : objectLiteral->members)
+                dfsRValue(member.second);
+        }
+
+        void dfsFunctionCall(FunctionCall* functionCall) { 
+            for (auto argument : functionCall->arguments)
+                dfsRValue(argument);
+        }
+
+        void dfsUnaryExpression(UnaryExpression* unaryExpression) { 
+            dfsRValue(unaryExpression->value);
+        }
+
+        void dfsBinaryExpression(BinaryExpression* binaryExpression) { 
+            dfsRValue(binaryExpression->lhs);
+            dfsRValue(binaryExpression->rhs);
+        }
+
+        void dfsLValue(LValue* lvalue) { 
+            auto var = lvalue->content;
+            if (var.index() == 0) dfsMemberAccess(get<0>(var));
+            if (var.index() == 1) dfsElementAccess(get<1>(var));
+        }
+
+        void dfsRValue(RValue* rvalue) { 
+            auto var = rvalue->content;
+            if (var.index() == 0) dfsLValue(get<0>(var));
+            if (var.index() == 1) dfsLiteral(get<1>(var));
+            if (var.index() == 2) dfsFunctionCall(get<2>(var));
+            if (var.index() == 3) dfsRValue(get<3>(var));
+            if (var.index() == 4) dfsUnaryExpression(get<4>(var));
+            if (var.index() == 5) dfsBinaryExpression(get<5>(var));
+        }
+
+        void dfsLiteral(Literal* literal) { 
+            auto var = literal->content;
+            if (var.index() == 5) dfsRValue(get<5>(var));
+            if (var.index() == 6) dfsObjectLiteral(get<6>(var));
+        }
+
+        void dfsStatement(Statement* statement) {
             auto var = statement->content;
             if (var.index() == 0) dfsDeclaration(get<0>(var));
             if (var.index() == 1) dfsAssignation(get<1>(var));
@@ -77,38 +158,7 @@ namespace Pickle {
             if (var.index() == 4) dfsWhile(get<4>(var));
             if (var.index() == 5) dfsFor(get<5>(var));
             if (var.index() == 7) dfsRValue(get<7>(var));
-            // ceva
-        };
-
-        void dfsDeclaration() { };
-
-        void dfsAssignation() { };
-
-        void dfsIf() { };
-
-        void dfsWhile() { };
-
-        void dfsFor() { };
-
-        void dfsMemberAccess() { };
-
-        void dfsElementAccess() { };
-
-        void dfsObjectLiteral() { };
-
-        void dfsFunctionCall() { };
-
-        void dfsUnaryExpression() { };
-
-        void dfsBinaryExpression() { };
-
-        void dfsLValue() { };
-
-        void dfsRValue() { };
-
-        void dfsLiteral() { };
-
-        void dfsStatement() { };
+        }
 
         string idk() {
             for (auto function : functions) {
