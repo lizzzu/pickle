@@ -176,7 +176,7 @@ rvalue
 
 type
     : TYPE              { $$ = $1; }
-    | TYPE '[' ']'      { $$ = $1 + "[]"; }
+    | TYPE '[' ']'      { $$ = $1 + "[]"; if ($$ == "void[]") Pickle::Parser::error("type " + Pickle::Interpreter::green("void[]") + " does not exist"); }
     | ID                { $$ = $1; }
     | ID '[' ']'        { $$ = $1 + "[]"; }
     ;

@@ -14,6 +14,19 @@ MyType {
   string b;
 }
 
+wtf fun() {
+  int x = 10;
+  break;
+}
+
+void fun(wtf x, int y) {
+  if (true) {
+    continue;
+  }
+  int y = 10;
+  int x = moruz(10, 20);
+}
+
 bool fun(int[] arg1, float arg2) {
   const float PI = 3.14;
   int x = 5;

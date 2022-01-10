@@ -1,0 +1,17 @@
+MyType[] object = [10];
+int[] array = [10];
+int x;
+int var_int = 123;
+string str = "hello pickle";
+
+MyType { float a; string b; }
+
+void print(string arg1, int arg2);
+void print(string arg1, float arg2);
+void print(string arg1, char arg2);
+void print(string arg1, string arg2);
+void print(string arg1, bool arg2);
+wtf fun();
+void fun(wtf x, int y);
+bool fun(int[] arg1, float arg2);
+void main();

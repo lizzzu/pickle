@@ -103,4 +103,12 @@ struct Statement {
     variant<Declaration*, Assignation*, FunctionCall*, If*, While*, For*, string, RValue*> content; // string = break or continue or return, RValue = return rvalue
 };
 
+typedef variant<
+    Object*, Function*,
+    Declaration*, Assignation*,
+    If*, While*, For*,
+    MemberAccess*, ElementAccess*, ObjectLiteral*, FunctionCall*, UnaryExpression*, BinaryExpression*,
+    LValue*, RValue*, Literal*, Statement*
+> Node;
+
 #endif
