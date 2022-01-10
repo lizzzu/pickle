@@ -246,6 +246,129 @@ namespace Pickle {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
+        string dfs4Declaration(Declaration* declaration) {
+            string type = declaration->type;
+            if (type.back() == ']') {
+                type.pop_back();
+                type.pop_back();
+            }
+            if (!primitiveTypes.count(type))
+                return declaration->name;
+            return "";
+        }
+
+        string dfs4Assignation(Assignation* assignation) {
+            const string res = dfs4RValue(assignation->value);
+            return "";
+        }
+
+        string dfs4If(If* _if) {
+            for (auto condition : _if->conditions) {
+                const string res1 = dfs4RValue(condition);
+                if (res1 != "") return res1;
+            }
+            for (auto& group : _if->statements)
+                for (auto statement : group) {
+                    const string res2 = dfs4Statement(statement);
+                    if (res2 != "") return res2;
+                }
+            return "";
+        }
+
+        string dfs4While(While* _while) {
+            const string res1 = dfs4RValue(_while->condition);
+            if (res1 != "") return res1;
+            for (auto statement : _while->statements) {
+                const string res2 = dfs4Statement(statement);
+                if (res2 != "") return res2;
+            }
+            return "";
+        }
+
+        string dfs4For(For* _for) {
+            for (auto statement : _for->statements) {
+                const string res =  dfs4Statement(statement);
+                if (res != "") return res;
+            }
+            return "";
+        }
+
+        string dfs4FunctionCall(FunctionCall* functionCall) {
+            if (find_if(functions.begin(), functions.end(), [&](Function* function) {
+                return function->name == functionCall->name;
+            }) == functions.end())
+                return functionCall->name;
+            return "";
+        }
+
+        string dfs4UnaryExpression(UnaryExpression* unaryExpression) {
+            const string res = dfs4RValue(unaryExpression->value);
+            if (res != "") return res;
+            return "";
+        }
+
+        string dfs4BinaryExpression(BinaryExpression* binaryExpression) {
+            const string res = dfs4RValue(binaryExpression->rhs);
+            if (res != "") return res;
+            return "";
+        }
+
+        string dfs4RValue(RValue* rvalue) {
+            auto var = rvalue->content;
+            if (var.index() == 2) {
+                const string res = dfs4FunctionCall(get<2>(var));
+                if (res != "") return res;
+            }
+            if (var.index() == 3) {
+                const string res = dfs4RValue(get<3>(var));
+                if (res != "") return res;
+            }
+            if (var.index() == 4) {
+                const string res = dfs4UnaryExpression(get<4>(var));
+                if (res != "") return res;
+            }
+            if (var.index() == 5) {
+                const string res = dfs4BinaryExpression(get<5>(var));
+                if (res != "") return res;
+            }
+            return "";
+        }
+
+        string dfs4Statement(Statement* statement) {
+            auto var = statement->content;
+            if (var.index() == 0) {
+                const string res = dfs4Declaration(get<0>(var));
+                if (res != "") return res;
+            }
+            if (var.index() == 1) {
+                const string res = dfs4Assignation(get<1>(var));
+                if (res != "") return res;
+            }
+            if (var.index() == 2) {
+                const string res = dfs4FunctionCall(get<2>(var));
+                if (res != "") return res;
+            }
+            if (var.index() == 3) {
+                const string res = dfs4If(get<3>(var));
+                if (res != "") return res;
+            }
+            if (var.index() == 4) {
+                const string res = dfs4While(get<4>(var));
+                if (res != "") return res;
+            }
+            if (var.index() == 5) {
+                const string res = dfs4For(get<5>(var));
+                if (res != "") return res;
+            }
+            if (var.index() == 7) {
+                const string res = dfs4RValue(get<7>(var));
+                if (res != "") return res;
+            }
+            return "";
+        }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
         string idk() {
             for (auto function : functions) {
                 auto& [type, name, arguments, statements] = *function;
@@ -283,11 +406,23 @@ namespace Pickle {
             return "";
         }
 
+        string checkForUndefinedFunctions() {
+            for (auto function : functions) {
+                auto& [type, name, arguments, statements] = *function;
+                for (auto statement : statements) {
+                    const string res = dfs4Statement(statement);
+                    if (res != "") return "function " + green(res) + " is not defined";
+                }
+            }
+            return "";
+        }
+
         string checkForErrors() {
             const string error1 = checkForObjectErrors(); if (error1 != "") return error1;
             const string error2 = idk(); if (error2 != "") return error2;
             const string error3 = checkForBreakContinueErrors(); if (error3 != "") return error3;
             const string error4 = checkForUndefinedObjects(); if (error4 != "") return error4;
+            const string error5 = checkForUndefinedFunctions(); if (error5 != "") return error5;
             return "";
             // checkForUndefinedMembers();
             // checkForUndefinedFunctions();

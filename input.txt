@@ -17,13 +17,13 @@ MyType {
 bool fun(int[] arg1, float arg2) {
   const float PI = 3.14;
   int x = 5;
+  array[3] = funct();
 
   if (x == 2) {
     print("yes");
   }
   elif (x == 5) {
     print("no");
-    objectype y = { a: 618 }; 
   }
   else {
     print("maybe");
@@ -42,7 +42,7 @@ bool fun(int[] arg1, float arg2) {
 ~~~
 
 void main() {
-
+  array[1] = 2;
   object.a = 1.618;
   object.b = "fii";
   fun([10], object.a);
