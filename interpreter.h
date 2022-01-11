@@ -20,10 +20,10 @@ namespace Pickle {
 
         static string getFunctionSignature(Function* function) {
             auto& [type, name, arguments, statements] = *function;
-            string str = type + " " + name + "(";
+            string str = name + "(";
             if (!arguments.empty()) {
                 for (auto [type, name] : arguments)
-                    str += type + " " + name + ", ";
+                    str += type + ", ";
                 str.pop_back();
                 str.pop_back();
             }
@@ -31,7 +31,7 @@ namespace Pickle {
             return str;
         }
 
-        static vector<string> checkForCycles(set<string>& nodes, map<string, vector<string>>& graph) {
+        static vector<string> findCycle(map<string, vector<string>>& graph) {
             map<string, string> father;
             vector<string> cycle;
             function<void(string, string)> dfs = [&](string node, string fath) {
@@ -47,7 +47,7 @@ namespace Pickle {
                         reverse(cycle.begin(), cycle.end());
                     }
             };
-            for (string node : nodes)
+            for (auto& [node, nghbs] : graph)
                 if (father[node] == "")
                     dfs(node, "$");
             return cycle;
@@ -60,6 +60,7 @@ namespace Pickle {
         vector<Object*> objects;
         vector<Function*> functions;
 
+        map<string, Declaration*> declarationMap;
         map<string, Object*> objectMap;
         map<string, Function*> functionMap;
 
@@ -165,6 +166,25 @@ namespace Pickle {
             }
         }
 
+        void checkForCyclicDependencies() {
+            map<string, vector<string>> graph;
+            for (auto object : objects) {
+                auto [name, members] = *object;
+                for (auto [mType, mName] : members)
+                    graph[name].push_back(mType);
+            }
+            auto cycle = findCycle(graph);
+            if (!cycle.empty()) {
+                string error = "types [";
+                for (string node : cycle)
+                    error += green(node) + ", ";
+                error.pop_back();
+                error.pop_back();
+                error += "] form a cycle of dependencies";
+                errors.push_back(error);
+            }
+        }
+
         void checkForBreakContinueErrors() {
             function<void(Node, Function*)> dfs = [&](Node node, Function* function) {
                 if (node.index() == 1) {
@@ -198,30 +218,38 @@ namespace Pickle {
                         if (type == "void")
                             errors.push_back("member " + green(name) + " of type " + green(object->name) + " is of type " + green(type));
                         else if (!types.count(getBaseType(type)) && !objectMap.count(getBaseType(type)))
-                            errors.push_back("member " + green(name) + " of type " + green(object->name) + " is of type " + green(type) + " which is undefined");
+                            errors.push_back("member " + green(name) + " of type " + green(object->name) + " is of undefined type " + green(type));
                 }
                 if (node.index() == 1) {
                     auto function = get<1>(node);
                     auto& [type, name, arguments, statements] = *function;
                     const string signature = getFunctionSignature(function);
                     if (!types.count(getBaseType(type)) && !objectMap.count(getBaseType(type)))
-                        errors.push_back("function " + green(signature) + " has return type " + green(type) + " which is undefined");
+                        errors.push_back("function " + green(signature) + " has undefined return type " + green(type));
                     for (auto [type, name] : arguments)
                         if (type == "void")
                             errors.push_back("argument " + green(name) + " of function " + green(signature) + " is of type " + green(type));
                         else if (!types.count(getBaseType(type)) && !objectMap.count(getBaseType(type)))
-                            errors.push_back("argument " + green(name) + " of function " + green(signature) + " is of type " + green(type) + " which is undefined");
+                            errors.push_back("argument " + green(name) + " of function " + green(signature) + " is of undefined type " + green(type));
                     for (auto statement : statements)
                         dfs(statement, function);
                 }
                 if (node.index() == 2) {
                     auto declaration = get<2>(node);
                     auto& [type, name, value, constant] = *declaration;
-                    const string signature = getFunctionSignature(function);
-                    if (type == "void")
-                        errors.push_back("variable " + green(name) + " of function " + green(signature) + " is of type " + green(type));
-                    else if (!types.count(getBaseType(type)) && !objectMap.count(getBaseType(type)))
-                        errors.push_back("variable " + green(name) + " of function " + green(signature) + " is of type " + green(type) + " which is undefined");
+                    if (!function) {
+                        if (type == "void")
+                            errors.push_back("global variable " + green(name) + " is of type " + green(type));
+                        else if (!types.count(getBaseType(type)) && !objectMap.count(getBaseType(type)))
+                            errors.push_back("global variable " + green(name) + " is of undefined type " + green(type));
+                    }
+                    else {
+                        const string signature = getFunctionSignature(function);
+                        if (type == "void")
+                            errors.push_back("variable " + green(name) + " of function " + green(signature) + " is of type " + green(type));
+                        else if (!types.count(getBaseType(type)) && !objectMap.count(getBaseType(type)))
+                            errors.push_back("variable " + green(name) + " of function " + green(signature) + " is of undefined type " + green(type));
+                    }
                 }
                 if (node.index() == 4) {
                     auto _if = get<4>(node);
@@ -239,7 +267,16 @@ namespace Pickle {
                     for (auto statement : _for->statements)
                         dfs(statement, function);
                 }
+                if (node.index() == 16) {
+                    auto statement = get<16>(node)->content;
+                    if (statement.index() == 0) dfs(get<0>(statement), function);
+                    if (statement.index() == 3) dfs(get<3>(statement), function);
+                    if (statement.index() == 4) dfs(get<4>(statement), function);
+                    if (statement.index() == 5) dfs(get<5>(statement), function);
+                }
             };
+            for (auto declaration : declarations)
+                dfs(declaration, nullptr);
             for (auto object : objects)
                 dfs(object, nullptr);
             for (auto function : functions)
@@ -248,30 +285,81 @@ namespace Pickle {
 
         void createTables() {
             ofstream fout("symbols.txt");
-            for (auto declaration : declarations) {
-                auto& [type, name, value, constant] = *declaration;
-                if (constant) fout << "const ";
-                fout << type << ' ' << name;
-                auto rvalue = value->content;
-                if (rvalue.index() == 1) {
-                    auto literal = get<1>(rvalue)->content;
-                    if (literal.index() == 0) fout << " = " << get<0>(literal);
-                    if (literal.index() == 1) fout << " = " << get<1>(literal);
-                    if (literal.index() == 2) fout << " = " << get<2>(literal);
-                    if (literal.index() == 3) fout << " = " << get<3>(literal);
-                    if (literal.index() == 4) fout << " = " << get<4>(literal);
-                    if (literal.index() == 5) {
-                        auto rvalue = get<5>(literal)->content;
-                        if (rvalue.index() == 1) {
-                            auto literal = get<1>(rvalue)->content;
-                            if (literal.index() == 0)
-                                fout << " = [" << get<0>(literal) << ']';
+            function<void(Node, int)> dfs = [&](Node node, int level) {
+                if (node.index() == 1) {
+                    auto function = get<1>(node);
+                    auto& [type, name, arguments, statements] = *function;
+                    for (auto statement : statements)
+                        dfs(statement, level + 1);
+                }
+                if (node.index() == 2) {
+                    auto declaration = get<2>(node);
+                    auto& [type, name, value, constant] = *declaration;
+                    for (int i = 0; i < level; i++)
+                        fout << '\t';
+                    if (constant) fout << "const ";
+                    fout << type << ' ' << name;
+                    auto rvalue = value->content;
+                    if (rvalue.index() == 1) {
+                        auto literal = get<1>(rvalue)->content;
+                        if (literal.index() == 0) fout << " = " << get<0>(literal);
+                        if (literal.index() == 1) fout << " = " << get<1>(literal);
+                        if (literal.index() == 2) fout << " = '" << get<2>(literal) << '\'';
+                        if (literal.index() == 3) fout << " = \"" << get<3>(literal) << '\"';
+                        if (literal.index() == 4) fout << " = " << get<4>(literal);
+                        if (literal.index() == 5) {
+                            auto rvalue = get<5>(literal)->content;
+                            if (rvalue.index() == 1) {
+                                auto literal = get<1>(rvalue)->content;
+                                if (literal.index() == 0)
+                                    fout << " = [" << get<0>(literal) << ']';
+                            }
                         }
                     }
+                    fout << ";\n";
                 }
-                fout << ";\n";
-            }
-            fout << '\n';
+                if (node.index() == 4) {
+                    auto _if = get<4>(node);
+                    for (auto& group : _if->statements)
+                        for (auto statement : group)
+                            dfs(statement, level + 1);
+                }
+                if (node.index() == 5) {
+                    auto _while = get<5>(node);
+                    for (auto statement : _while->statements)
+                        dfs(statement, level + 1);
+                }
+                if (node.index() == 6) {
+                    auto _for = get<6>(node);
+                    auto& [iterator, from, to, step, statements] = *_for;
+                    for (int i = 0; i < level + 1; i++)
+                        fout << '\t';
+                    fout << "int " << iterator;
+                    auto rvalue = from->content;
+                    if (rvalue.index() == 1) {
+                        auto literal = get<1>(rvalue)->content;
+                        if (literal.index() == 0)
+                            fout << " = " << get<0>(literal) << ";\n";
+                    }
+                    for (auto statement : statements)
+                        dfs(statement, level + 1);
+                }
+                if (node.index() == 16) {
+                    auto statement = get<16>(node)->content;
+                    if (statement.index() == 0) dfs(get<0>(statement), level);
+                    if (statement.index() == 3) dfs(get<3>(statement), level);
+                    if (statement.index() == 4) dfs(get<4>(statement), level);
+                    if (statement.index() == 5) dfs(get<5>(statement), level);
+                }
+            };
+
+            fout << "GLOBAL VARIABLES\n";
+            fout << "================\n\n";
+            for (auto declaration : declarations)
+                dfs(declaration, 0);
+
+            fout << "\nUSER-DEFINED TYPES";
+            fout << "\n==================\n\n";
             for (auto object : objects) {
                 auto& [name, members] = *object;
                 fout << name << " { ";
@@ -279,12 +367,26 @@ namespace Pickle {
                     fout << type << ' ' << name << "; ";
                 fout << "}\n";
             }
-            fout << '\n';
-            for (auto function : functions)
-                fout << getFunctionSignature(function) << ";\n";
+
+            fout << "\nFUNCTIONS";
+            fout << "\n=========\n\n";
+            for (int i = 5; i < int(functions.size()); i++) {
+                auto& [type, name, arguments, statements] = *(functions[i]);
+                string str = type + " " + name + "(";
+                if (!arguments.empty()) {
+                    for (auto [type, name] : arguments)
+                        str += type + " " + name + ", ";
+                    str.pop_back();
+                    str.pop_back();
+                }
+                str += ");";
+                fout << str << '\n';
+                dfs(functions[i], 0);
+            }
         }
 
         void checkForErrors() {
+            checkForCyclicDependencies();
             checkForBreakContinueErrors();
             checkForUndefinedTypeErrors();
         }
@@ -301,8 +403,8 @@ namespace Pickle {
                 types.insert("void");
                 for (string arg2 : {"int", "float", "char", "string", "bool"}) {
                     deque<pair<string, string>> dq;
-                    dq.emplace_back("string", "arg1");
-                    dq.emplace_back(arg2, "arg2");
+                    dq.emplace_back("string", "message");
+                    dq.emplace_back(arg2, "value");
                     functions.push_back(new Function{"void", "print", dq, deque<Statement*>()});
                 }
             }
@@ -310,17 +412,35 @@ namespace Pickle {
         int parse() {
             if (parser.parse())
                 return 1;
+            for (auto declaration : declarations) {
+                const string id = declaration->name;
+                if (declarationMap.count(id))
+                    errors.push_back("global variable " + green(id) + " has already been defined");
+                declarationMap[id] = declaration;
+            }
             for (auto object : objects) {
                 const string id = object->name;
                 if (objectMap.count(id))
                     errors.push_back("type " + green(id) + " has already been defined");
                 objectMap[id] = object;
+                set<string> members;
+                for (auto [type, name] : object->members) {
+                    if (members.count(name))
+                        errors.push_back("member " + green(name) + " has already been defined inside type " + green(object->name));
+                    members.insert(name);
+                }
             }
             for (auto function : functions) {
                 const string id = getFunctionSignature(function);
                 if (functionMap.count(id))
                     errors.push_back("function " + green(id) + " has already been defined");
                 functionMap[id] = function;
+                set<string> arguments;
+                for (auto [type, name] : function->arguments) {
+                    if (arguments.count(name))
+                        errors.push_back("argument " + green(name) + " has already been defined inside function " + green(function->name));
+                    arguments.insert(name);
+                }
             }
             createTables();
             checkForErrors();

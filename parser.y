@@ -129,17 +129,17 @@ assignation
 
 statement_list
     :                                     { $$ = new deque<Statement*>; }
-    | statement_list declaration ';'      { $$ = $1; $$->push_front(new Statement{$2}); }
-    | statement_list assignation ';'      { $$ = $1; $$->push_front(new Statement{$2}); }
-    | statement_list function_call ';'    { $$ = $1; $$->push_front(new Statement{$2}); }
-    | statement_list if                   { $$ = $1; If *i = new If; i->conditions.push_front($2.first); i->statements.push_front(*($2.second)); $$->push_front(new Statement{i}); }
-    | statement_list if elif_list         { $$ = $1; If *i =     $3; i->conditions.push_front($2.first); i->statements.push_front(*($2.second)); $$->push_front(new Statement{i}); }
-    | statement_list while                { $$ = $1; $$->push_front(new Statement{$2}); }
-    | statement_list for                  { $$ = $1; $$->push_front(new Statement{$2}); }
-    | statement_list BREAK ';'            { $$ = $1; $$->push_front(new Statement{"break"}); }
-    | statement_list CONTINUE ';'         { $$ = $1; $$->push_front(new Statement{"continue"}); }
-    | statement_list RETURN ';'           { $$ = $1; $$->push_front(new Statement{"return"}); }
-    | statement_list RETURN rvalue ';'    { $$ = $1; $$->push_front(new Statement{$3}); }
+    | statement_list declaration ';'      { $$ = $1; $$->push_back(new Statement{$2}); }
+    | statement_list assignation ';'      { $$ = $1; $$->push_back(new Statement{$2}); }
+    | statement_list function_call ';'    { $$ = $1; $$->push_back(new Statement{$2}); }
+    | statement_list if                   { $$ = $1; If *i = new If; i->conditions.push_front($2.first); i->statements.push_front(*($2.second)); $$->push_back(new Statement{i}); }
+    | statement_list if elif_list         { $$ = $1; If *i =     $3; i->conditions.push_front($2.first); i->statements.push_front(*($2.second)); $$->push_back(new Statement{i}); }
+    | statement_list while                { $$ = $1; $$->push_back(new Statement{$2}); }
+    | statement_list for                  { $$ = $1; $$->push_back(new Statement{$2}); }
+    | statement_list BREAK ';'            { $$ = $1; $$->push_back(new Statement{"break"}); }
+    | statement_list CONTINUE ';'         { $$ = $1; $$->push_back(new Statement{"continue"}); }
+    | statement_list RETURN ';'           { $$ = $1; $$->push_back(new Statement{"return"}); }
+    | statement_list RETURN rvalue ';'    { $$ = $1; $$->push_back(new Statement{$3}); }
     ;
 elif_list
     : else                                { $$ = new If; $$->statements.push_front(*$1); }

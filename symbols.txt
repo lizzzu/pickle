@@ -1,17 +1,35 @@
-MyType[] object = [10];
-int[] array = [10];
-int x;
-int var_int = 123;
-string str = "hello pickle";
+GLOBAL VARIABLES
+================
 
-MyType { float a; string b; }
+int[] var1 = [10];
+int var2 = 2;
+wtf[] var3 = 3;
+float var1 = 1;
 
-void print(string arg1, int arg2);
-void print(string arg1, float arg2);
-void print(string arg1, char arg2);
-void print(string arg1, string arg2);
-void print(string arg1, bool arg2);
-wtf fun();
-void fun(wtf x, int y);
+USER-DEFINED TYPES
+==================
+
+MyType { float a; string b; wtf x; int x; }
+A { int x; }
+A { bool y; }
+B { C c; }
+C { B b; }
+D { D d; }
+
+FUNCTIONS
+=========
+
+void f1();
+bool f1();
+void f2(int x);
+void f2(int y);
+wtf fun(wtf x, int y, void z, float y);
+		wtf z = 7;
+	int y = 10;
+	wtf x;
 bool fun(int[] arg1, float arg2);
+	const float PI = 3.14;
+	int x = 5;
+		int i = 1;
+		int j = 1;
 void main();

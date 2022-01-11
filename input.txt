@@ -1,30 +1,39 @@
 +++
 
-MyType[] object = [10];
-
-int[] array = [10];
-int x = array[4];
-int var_int = 123;
-string str = "hello pickle";
+int[] var1 = [10];
+int var2 = 2;
+wtf[] var3 = 3;
+float var1 = 1;
 
 ~~~
 
 MyType {
   float a;
   string b;
+  wtf x;
+  int x;
 }
 
-wtf fun() {
-  int x = 10;
-  break;
-}
+A { int x; }
+A { bool y; }
 
-void fun(wtf x, int y) {
+B { C c; }
+C { B b; }
+D { D d; }
+
+void f1() { }
+bool f1() { }
+
+void f2(int x) { }
+void f2(int y) { }
+
+wtf fun(wtf x, int y, void z, float y) {
   if (true) {
+    wtf z = 7;
     continue;
   }
   int y = 10;
-  int x = moruz(10, 20);
+  wtf x = fun(10, 20);
 }
 
 bool fun(int[] arg1, float arg2) {

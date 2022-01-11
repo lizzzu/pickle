@@ -49,8 +49,8 @@ not                                { return Parser::make_NOT(yytext); }
 [_a-zA-Z][_a-zA-Z0-9]*             { return Parser::make_ID(yytext); }
 [+-]?(0|[1-9][0-9]*)               { return Parser::make_INT(atoi(yytext)); }
 [+-]?(0|[1-9][0-9]*)?\.[0-9]+      { return Parser::make_FLOAT(atof(yytext)); }
-'[^\r\n'\"]'                       { return Parser::make_CHAR(yytext[0]); }
-\"[^\r\n'\"]*\"                    { return Parser::make_STRING(yytext); }
+'[^\r\n'\"]'                       { return Parser::make_CHAR(yytext[1]); }
+\"[^\r\n'\"]*\"                    { return Parser::make_STRING(string(yytext).substr(1, strlen(yytext) - 2)); }
 
 [ \t\r\n]                          { }
 .                                  { return yytext[0]; }

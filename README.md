@@ -10,16 +10,17 @@ make clean
 
 ## error detection
 
-### cycle of dependencies from type definitions
+### redefinition errors
+- global variables 🥒
+- types 🥒
+- functions 🥒
+- members 🥒
+- arguments 🥒
+
+### cycle of dependencies from type definitions 🥒
 ```
 A { B b; }
 B { A a; }
-```
-
-### cycle of dependencies from function definitions
-```
-void a() { b(); }
-void b() { a(); }
 ```
 
 ### `break`/`continue` not inside loop 🥒
@@ -33,12 +34,21 @@ void fun() {
 
 ### undefined type
 ```
-X x = { };
+X x = { }; 🥒
 Type { X x; } 🥒
 void fun1(X x) { } 🥒
 void fun2() { X x = { }; } 🥒
 X fun3() { } 🥒
 ```
+
+### `void` errors
+- `void[]` 🥒
+- `void` elsewhere than in function return type 🥒
+
+### variable errors
+- undefined variable
+- redefined variable
+- constant inside `rvalue` of assignment
 
 ### undefined function
 ```
@@ -46,19 +56,6 @@ int x = fun1();
 void fun2() { int x = fun1(); }
 void fun3() { int x = fun2(10); }
 ```
-
-### `void` errors
-- `void[]` 🥒
-- `void` elsewhere than in function return type 🥒
-
-### redefinition errors
-- types 🥒
-- functions 🥒
-
-### variable errors
-- undefined variable
-- redefined variable
-- constant inside `rvalue` of assignment
 
 ### type errors
 - in expressions
