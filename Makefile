@@ -8,3 +8,4 @@ clean:
 	rm parser.cpp
 	rm parser.hpp
 	rm pickle
+	rm symbols.txt
