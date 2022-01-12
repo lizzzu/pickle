@@ -284,6 +284,19 @@ namespace Pickle {
         }
 
         void checkForTypeErrors() {
+            map<string, string> global;
+            vector<map<string, string>> local;
+            auto findVariable = [&](string name) -> string {
+                for (int i = int(local.size()) - 1; i >= 0; i--)
+                    if (local[i].count(name))
+                        return local[i][name];
+                if (global.count(name))
+                    return global[name];
+                errors.push_back("undefined variable " + green(name));
+                return "?";
+            };
+
+            string scope;
             function<string(Node)> dfs = [&](Node node) -> string {
                 auto check = [&](string type, ObjectLiteral* objectLiteral) {
                     if (!objectMap.count(type))
@@ -306,8 +319,12 @@ namespace Pickle {
                 if (node.index() == 1) {
                     auto function = get<1>(node);
                     auto& [type, name, arguments, statements] = *function;
+                    local.emplace_back();
+                    for (auto [type, name] : arguments)
+                        local.back()[name] = type;
                     for (auto statement : statements)
                         dfs(statement);
+                    local.pop_back();
                     return "";
                 }
                 if (node.index() == 2) {
@@ -320,6 +337,13 @@ namespace Pickle {
                         return "";
                     if (type != valueType)
                         errors.push_back("variable " + green(name) + " is of type " + green(type) + " and is assigned an expression of type " + green(valueType));
+                    if (scope == "global")
+                        global[name] = type;
+                    else {
+                        if (local.back().count(name))
+                            errors.push_back("variable " + green(name) + " has already been defined");
+                        local.back()[name] = type;
+                    }
                     return "";
                 }
                 if (node.index() == 3) {
@@ -345,9 +369,12 @@ namespace Pickle {
                             errors.push_back("expression inside " + green(index ? "elif" : "if") + " is of type " + green(conditionType));
                         index++;
                     }
-                    for (auto& group : statements)
+                    for (auto& group : statements) {
+                        local.emplace_back();
                         for (auto statement : group)
                             dfs(statement);
+                        local.pop_back();
+                    }
                     return "";
                 }
                 if (node.index() == 5) {
@@ -356,8 +383,10 @@ namespace Pickle {
                     const string conditionType = dfs(condition);
                     if (conditionType != "bool")
                         errors.push_back("expression inside " + green("while") + " is of type " + green(conditionType));
+                    local.emplace_back();
                     for (auto statement : statements)
                         dfs(statement);
+                    local.pop_back();
                     return "";
                 }
                 if (node.index() == 6) {
@@ -372,8 +401,11 @@ namespace Pickle {
                         errors.push_back(green("to") + " expression inside " + green("for") + " is of type " + green(toType));
                     if (stepType != "int")
                         errors.push_back(green("step") + " expression inside " + green("for") + " is of type " + green(stepType));
+                    local.emplace_back();
+                    local.back()[iterator] = "int";
                     for (auto statement : statements)
                         dfs(statement);
+                    local.pop_back();
                     return "";
                 }
                 if (node.index() == 7) {
@@ -502,9 +534,7 @@ namespace Pickle {
                     auto lvalue = get<13>(node)->content;
                     if (lvalue.index() == 0) return dfs(get<0>(lvalue));
                     if (lvalue.index() == 1) return dfs(get<1>(lvalue));
-                    if (lvalue.index() == 2) {
-                        return "?"; // TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    }
+                    if (lvalue.index() == 2) return findVariable(get<2>(lvalue));
                 }
                 if (node.index() == 14) {
                     auto rvalue = get<14>(node)->content;
@@ -544,8 +574,10 @@ namespace Pickle {
                 }
                 return "";
             };
+            scope = "global";
             for (auto declaration : declarations)
                 dfs(declaration);
+            scope = "local";
             for (auto function : functions)
                 dfs(function);
         }

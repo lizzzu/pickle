@@ -2,7 +2,7 @@
 
 int[] var1 = [10];
 int var2 = 2;
-wtf[] var3 = 3;
+undef[] var3 = 3;
 float var1 = 1;
 
 ~~~
@@ -10,7 +10,7 @@ float var1 = 1;
 MyType {
   float a;
   string b;
-  wtf x;
+  undef x;
   int x;
 }
 
@@ -27,19 +27,20 @@ bool f1() { }
 void f2(int x) { }
 void f2(int y) { }
 
-wtf fun(wtf x, int y, void z, float y) {
+undef fun(undef x, int y, void z, float y) {
   if (true) {
-    wtf z = 7;
+    undef z = 7;
     continue;
   }
   int y = 10;
-  wtf x = fun(10, 20);
+  undef x = fun(10, 20);
 }
 
 bool fun(int[] arg1, float arg2) {
   const float PI = 3.14;
   int x = 5;
   array[3] = funct();
+  int x = 10;
 
   if (x == 2) {
     print("yes");
@@ -67,7 +68,7 @@ void main() {
   array[1] = 2;
   object.a = 1.618;
   object.b = "fii";
-  fun([10], object.a);
+  fun(10, object.a);
 }
 
 ---
