@@ -27,6 +27,9 @@ bool f1() { }
 void f2(int x) { }
 void f2(int y) { }
 
+void f3(int x) { }
+bool f3(string x) { }
+
 undef fun(undef x, int y, void z, float y) {
   if (true) {
     undef z = 7;
@@ -43,20 +46,21 @@ bool fun(int[] arg1, float arg2) {
   int x = 10;
 
   if (x == 2) {
-    print("yes");
+    print("yes", x);
   }
   elif (x == 5) {
-    print("no");
+    print("no", x);
   }
   else {
-    print("maybe");
+    print("maybe", x);
   }
 
+  bool val = 3 == 3 and x < 13;
   for (let i from 1 to 10 step 2) {
     int j = 1;
     while (j < i) {
       j = j + 1;
-      print(j);
+      print("msg", j);
     }
   }
   return arg2 * PI;
@@ -67,8 +71,12 @@ bool fun(int[] arg1, float arg2) {
 void main() {
   array[1] = 2;
   object.a = 1.618;
-  object.b = "fii";
+  object = {
+    a: 3.14,
+    b: 1
+  };
   fun(10, object.a);
+  int x = "string";
 }
 
 ---
